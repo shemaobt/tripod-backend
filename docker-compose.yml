@@ -41,6 +41,19 @@ services:
       uv run alembic upgrade head &&
       uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: tripod_backend
+    container_name: tripod_backend_lint
+    volumes:
+      - ./:/app
+      - backend_venv:/opt/venv
+    command: sh -c "uv run ruff check . && uv run ruff format --check ."
+    profiles:
+      - lint
+
 volumes:
   backend_venv:
   gcp_secrets_env:
