@@ -4,12 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import get_settings
-
-
-def _async_database_url(url: str) -> str:
-    if url.startswith("postgresql://") and "+asyncpg" not in url:
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    return url
+from app.core.db_url import async_database_url, ssl_connect_args
 
 
 class Base(DeclarativeBase):
@@ -17,8 +12,11 @@ class Base(DeclarativeBase):
 
 
 settings = get_settings()
+_raw_url = settings.database_url
 engine = create_async_engine(
-    _async_database_url(settings.database_url), pool_pre_ping=True
+    async_database_url(_raw_url),
+    pool_pre_ping=True,
+    connect_args=ssl_connect_args(_raw_url),
 )
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 

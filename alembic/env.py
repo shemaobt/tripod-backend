@@ -3,17 +3,16 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import get_settings
 from app.core.database import Base
+from app.core.db_url import async_database_url, ssl_connect_args
 from app.db.models import auth  # noqa: F401
 
 config = context.config
 settings = get_settings()
-url = settings.database_url
-if url.startswith("postgresql://") and "+asyncpg" not in url:
-    url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+url = async_database_url(settings.database_url)
 config.set_main_option("sqlalchemy.url", url)
 
 if config.config_file_name is not None:
@@ -42,10 +41,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        url,
         poolclass=pool.NullPool,
+        connect_args=ssl_connect_args(settings.database_url),
     )
 
     async with connectable.connect() as connection:
