@@ -48,6 +48,13 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }}
 
+      - name: Run migrations
+        run: |
+          docker run --rm \
+            -e DATABASE_URL="$(gcloud secrets versions access latest --secret=tripod_backend_neon_database_url --project=shemaobt-secrets)" \
+            us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }} \
+            sh -c "uv run alembic upgrade head"
+
       - name: Deploy Backend
         run: |
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
@@ -58,4 +65,6 @@ jobs:
             --allow-unauthenticated \
             --memory=1Gi \
             --concurrency=80 \
+            --timeout=300 \
+            --cpu-throttling \
             --set-secrets="DATABASE_URL=projects/${{ env.SECRETS_PROJECT_NUMBER }}/secrets/tripod_backend_neon_database_url:latest,JWT_SECRET_KEY=projects/${{ env.SECRETS_PROJECT_NUMBER }}/secrets/tripod_backend_jwt_secret:latest"

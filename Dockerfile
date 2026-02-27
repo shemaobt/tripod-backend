@@ -22,4 +22,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["sh", "-c", "uv run alembic upgrade head && gunicorn app.main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --timeout 120"]
+CMD ["sh", "-c", "gunicorn app.main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8080} --timeout 120"]
