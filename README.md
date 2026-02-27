@@ -6,7 +6,10 @@ Shared API backend for Tripod: a platform that powers multiple language and tran
 
 ## CI/CD (GitHub Actions)
 
-Deploys to Cloud Run on push to `main`. Set these repository secrets (Settings → Secrets and variables → Actions):
+- **On PR:** lint and test run; migrations are **not** applied.
+- **On push to `main`:** deploy workflow builds, runs `alembic upgrade head` against the production DB, then deploys to Cloud Run.
+
+Set these repository secrets (Settings → Secrets and variables → Actions):
 
 | Secret | Purpose |
 |--------|---------|
@@ -45,7 +48,7 @@ Secrets are loaded from GCP Secret Manager (same pattern as production).
 
    `SECRETS_PROJECT_ID` is only used when the stack starts: the `gcp-secrets` container reads it and fetches `DATABASE_URL` and `JWT_SECRET_KEY` from that GCP project into a shared volume. The backend then loads them at startup. You don’t need it for one-off commands.
 
-4. **Migrations, seed, tests** — with the backend running, in another terminal:
+4. **Apply migrations (manual), seed, tests** — migrations on your local/test DB are not run automatically; you run them yourself when needed. With the backend running, in another terminal:
 
    ```bash
    docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
@@ -53,7 +56,27 @@ Secrets are loaded from GCP Secret Manager (same pattern as production).
    docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run pytest tests"
    ```
 
-   The `set -a && . /run/secrets/.env && set +a` loads the same env file the backend uses (from the volume) into the shell before running the command. If you prefer not to have the backend running, use `SECRETS_PROJECT_ID=<ID> docker compose run --rm backend sh -c "..."` so `gcp-secrets` can run first and fill the volume.
+   See **Migrations** below for when and how to run migrations locally. The `set -a && . /run/secrets/.env && set +a` loads the env file the backend uses. If the stack isn’t running, use `SECRETS_PROJECT_ID=<ID> docker compose run --rm backend sh -c "..."` so `gcp-secrets` can run first and fill the volume.
+
+## Migrations
+
+- **Creating a migration** (when you add or change models): with the backend running and env loaded, run:
+
+  ```bash
+  docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic revision --autogenerate -m 'short description'"
+  ```
+
+  A new file appears in `alembic/versions/`. Review it, then commit it.
+
+- **Applying migrations to your local / test database** is **manual**. Migrations are never applied automatically against your local DB. When you want to update the schema (e.g. after pulling new migrations or creating one), run:
+
+  ```bash
+  docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
+  ```
+
+  Do this with the backend running (or use `SECRETS_PROJECT_ID=<ID> docker compose run --rm backend sh -c "..."` if the stack isn’t up). Do not run `upgrade head` against a shared or production DB from a branch.
+
+- **Production:** migrations are applied automatically only after the PR is merged to `main`; the deploy workflow runs `alembic upgrade head` before deploying. On PR we only run lint and tests (no migration apply).
 
 ## Lint (Ruff)
 

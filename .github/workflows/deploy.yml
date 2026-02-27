@@ -48,6 +48,7 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }}
 
+      # Migrations run only here (push to main / after merge). They are not run on PR.
       - name: Run migrations
         run: |
           docker run --rm \
