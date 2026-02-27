@@ -23,6 +23,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check required secrets
+        run: |
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then echo "::error::GCP_PROJECT_ID is not set. Add it in Settings → Secrets and variables → Actions."; exit 1; fi
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then echo "::error::GCP_SA_KEY is not set. Add the GCP service account key JSON in Settings → Secrets and variables → Actions."; exit 1; fi
+          if [ -z "${{ secrets.SECRETS_PROJECT_NUMBER }}" ]; then echo "::error::SECRETS_PROJECT_NUMBER is not set. Add it in Settings → Secrets and variables → Actions."; exit 1; fi
+          echo "Required secrets are set."
+
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
