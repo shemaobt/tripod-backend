@@ -1,14 +1,14 @@
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
 from app.core.db_url import async_database_url, ssl_connect_args
-from app.db.models import auth  # noqa: F401
+from app.db.models import auth, project  # noqa: F401
 
 config = context.config
 settings = get_settings()
