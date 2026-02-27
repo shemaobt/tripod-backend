@@ -34,40 +34,36 @@ class InvalidTokenError(Exception):
     pass
 
 
+class NotFoundError(Exception):
+    pass
+
+
 def _error_body(detail: str, code: str) -> dict:
     return {"detail": detail, "code": code}
 
 
-async def handle_authentication_error(
-    _request: Request, exc: AuthenticationError
-) -> JSONResponse:
+async def handle_authentication_error(_request: Request, exc: AuthenticationError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content=_error_body(str(exc), ERROR_CODE_UNAUTHORIZED),
     )
 
 
-async def handle_authorization_error(
-    _request: Request, exc: AuthorizationError
-) -> JSONResponse:
+async def handle_authorization_error(_request: Request, exc: AuthorizationError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
         content=_error_body(str(exc), ERROR_CODE_FORBIDDEN),
     )
 
 
-async def handle_conflict_error(
-    _request: Request, exc: ConflictError
-) -> JSONResponse:
+async def handle_conflict_error(_request: Request, exc: ConflictError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content=_error_body(str(exc), ERROR_CODE_CONFLICT),
     )
 
 
-async def handle_role_error(
-    _request: Request, exc: RoleError
-) -> JSONResponse:
+async def handle_role_error(_request: Request, exc: RoleError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=_error_body(str(exc), ERROR_CODE_BAD_REQUEST),
@@ -78,6 +74,13 @@ async def handle_invalid_token(_request: Request, exc: InvalidTokenError) -> JSO
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content=_error_body(str(exc) or "Invalid or expired token", ERROR_CODE_UNAUTHORIZED),
+    )
+
+
+async def handle_not_found_error(_request: Request, exc: NotFoundError) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content=_error_body(str(exc), ERROR_CODE_NOT_FOUND),
     )
 
 
@@ -92,9 +95,7 @@ async def handle_unexpected(_request: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def handle_http_exception(
-    _request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def handle_http_exception(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
     code = ERROR_CODE_INTERNAL
     status_code = exc.status_code
     detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
@@ -125,4 +126,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(ConflictError, handle_conflict_error)
     app.add_exception_handler(RoleError, handle_role_error)
     app.add_exception_handler(InvalidTokenError, handle_invalid_token)
+    app.add_exception_handler(NotFoundError, handle_not_found_error)
     app.add_exception_handler(Exception, handle_unexpected)
