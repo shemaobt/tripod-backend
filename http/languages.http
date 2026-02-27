@@ -1,0 +1,25 @@
+@baseUrl = http://localhost:8000
+# Set after running Auth: Login in auth.http (use auth_login.response.body.tokens.access_token)
+@accessToken =
+
+### List languages
+GET {{baseUrl}}/api/languages
+Authorization: Bearer {{accessToken}}
+
+### Create language
+POST {{baseUrl}}/api/languages
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Portuguese",
+  "code": "por"
+}
+
+### Get language by code
+GET {{baseUrl}}/api/languages/code/por
+Authorization: Bearer {{accessToken}}
+
+### Get language by id
+GET {{baseUrl}}/api/languages/LANGUAGE_ID
+Authorization: Bearer {{accessToken}}

@@ -8,6 +8,9 @@ Use these with VS Code [REST Client](https://marketplace.visualstudio.com/items?
 - **health.http** – Health check only.
 - **auth.http** – Signup, login, refresh, logout, me, my-roles. Login is named so `me` / `refresh` / `logout` / `my-roles` in the same file use the returned token.
 - **roles.http** – Role check, assign, revoke. Requires a valid `access_token`: run **Auth: Login** in `auth.http`, copy `tokens.access_token` from the response, and set `@accessToken` at the top of `roles.http`.
+- **languages.http** – List, create, get by id/code. Set `@accessToken` after login.
+- **organizations.http** – List, create, get by id/slug, add member. Set `@accessToken` after login.
+- **projects.http** – List, create, get by id, update location, grant user/org access. Set `@accessToken` after login; replace `LANGUAGE_ID`, `PROJECT_ID`, `ORGANIZATION_ID`, `USER_ID` with real IDs.
 - **errors.http** – Examples that trigger 401, 409, etc.
 
 ## Base URL
