@@ -22,11 +22,17 @@ async def create_project(
     name: str,
     language_id: str,
     description: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    location_display_name: str | None = None,
 ) -> Project:
     project = Project(
         name=name,
         language_id=language_id,
         description=description,
+        latitude=latitude,
+        longitude=longitude,
+        location_display_name=location_display_name,
     )
     db.add(project)
     await db.commit()
@@ -130,4 +136,24 @@ async def get_project_or_404(db: AsyncSession, project_id: str) -> Project:
     project = await get_project_by_id(db, project_id)
     if not project:
         raise NotFoundError("Project not found")
+    return project
+
+
+async def update_project_location(
+    db: AsyncSession,
+    project_id: str,
+    *,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    location_display_name: str | None = None,
+) -> Project:
+    project = await get_project_or_404(db, project_id)
+    if latitude is not None:
+        project.latitude = latitude
+    if longitude is not None:
+        project.longitude = longitude
+    if location_display_name is not None:
+        project.location_display_name = location_display_name
+    await db.commit()
+    await db.refresh(project)
     return project
