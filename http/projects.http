@@ -1,0 +1,69 @@
+@baseUrl = http://localhost:8000
+# Set after running Auth: Login in auth.http
+@accessToken =
+
+### List projects (accessible to current user)
+GET {{baseUrl}}/api/projects
+Authorization: Bearer {{accessToken}}
+
+### List projects filtered by language
+GET {{baseUrl}}/api/projects?language_id=LANGUAGE_ID
+Authorization: Bearer {{accessToken}}
+
+### Create project
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Kokama Bible",
+  "description": "Translation project for Kokama",
+  "language_id": "LANGUAGE_ID"
+}
+
+### Create project with location
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "São Paulo Project",
+  "description": "Project in São Paulo",
+  "language_id": "LANGUAGE_ID",
+  "latitude": -23.5505,
+  "longitude": -46.6333,
+  "location_display_name": "São Paulo, Brazil"
+}
+
+### Get project by id
+GET {{baseUrl}}/api/projects/PROJECT_ID
+Authorization: Bearer {{accessToken}}
+
+### Update project location
+PATCH {{baseUrl}}/api/projects/PROJECT_ID/location
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "latitude": -23.5505,
+  "longitude": -46.6333,
+  "location_display_name": "São Paulo, Brazil"
+}
+
+### Grant user access to project
+POST {{baseUrl}}/api/projects/PROJECT_ID/access/users
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "user_id": "USER_ID"
+}
+
+### Grant organization access to project
+POST {{baseUrl}}/api/projects/PROJECT_ID/access/organizations
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "organization_id": "ORGANIZATION_ID"
+}

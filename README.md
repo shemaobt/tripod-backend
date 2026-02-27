@@ -4,6 +4,8 @@ Shared API backend for Tripod: a platform that powers multiple language and tran
 
 **Stack:** FastAPI, SQLAlchemy 2 (async + asyncpg), Alembic, PostgreSQL (Neon), uv, Docker, Cloud Run.
 
+Projects can have an optional location: `latitude`, `longitude`, and `location_display_name` are stored so clients can show projects on a map. The UI should use a geocoding/places API (e.g. Google Maps Places Autocomplete) to let users search for a place and then send the chosen coordinates and display name to the backend; the backend does not call external map APIs.
+
 ## CI/CD (GitHub Actions)
 
 - **On PR:** lint and test run; migrations are **not** applied.

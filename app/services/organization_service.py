@@ -5,6 +5,12 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.project import Organization, OrganizationMember
 
 
+async def list_organizations(db: AsyncSession) -> list[Organization]:
+    stmt: Select[tuple[Organization]] = select(Organization).order_by(Organization.name)
+    result = await db.execute(stmt)
+    return list(result.scalars().unique().all())
+
+
 async def get_organization_by_id(db: AsyncSession, organization_id: str) -> Organization | None:
     stmt: Select[tuple[Organization]] = select(Organization).where(
         Organization.id == organization_id

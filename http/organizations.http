@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:8000
+# Set after running Auth: Login in auth.http
+@accessToken =
+
+### List organizations
+GET {{baseUrl}}/api/organizations
+Authorization: Bearer {{accessToken}}
+
+### Create organization
+POST {{baseUrl}}/api/organizations
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Acme Corp",
+  "slug": "acme-corp"
+}
+
+### Get organization by slug
+GET {{baseUrl}}/api/organizations/slug/acme-corp
+Authorization: Bearer {{accessToken}}
+
+### Get organization by id
+GET {{baseUrl}}/api/organizations/ORGANIZATION_ID
+Authorization: Bearer {{accessToken}}
+
+### Add member to organization
+POST {{baseUrl}}/api/organizations/ORGANIZATION_ID/members
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "user_id": "USER_ID",
+  "role": "member"
+}

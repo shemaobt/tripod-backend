@@ -144,11 +144,17 @@ async def make_project(
     *,
     name: str = "Test Project",
     description: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    location_display_name: str | None = None,
 ) -> Project:
     project = Project(
         name=name,
         language_id=language_id,
         description=description,
+        latitude=latitude,
+        longitude=longitude,
+        location_display_name=location_display_name,
     )
     db.add(project)
     await db.commit()

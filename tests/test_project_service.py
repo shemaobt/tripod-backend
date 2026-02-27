@@ -25,6 +25,70 @@ async def test_create_project(db_session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_project_with_location(db_session) -> None:
+    lang = await make_language(db_session, code="kos")
+    project = await project_service.create_project(
+        db_session,
+        name="São Paulo Project",
+        language_id=lang.id,
+        latitude=-23.5505,
+        longitude=-46.6333,
+        location_display_name="São Paulo, Brazil",
+    )
+    assert project.latitude == -23.5505
+    assert project.longitude == -46.6333
+    assert project.location_display_name == "São Paulo, Brazil"
+
+
+@pytest.mark.asyncio
+async def test_update_project_location(db_session) -> None:
+    lang = await make_language(db_session, code="kos")
+    project = await make_project(db_session, language_id=lang.id, name="No Location")
+    assert project.latitude is None
+    assert project.longitude is None
+    updated = await project_service.update_project_location(
+        db_session,
+        project.id,
+        latitude=-23.5505,
+        longitude=-46.6333,
+        location_display_name="São Paulo, Brazil",
+    )
+    assert updated.latitude == -23.5505
+    assert updated.longitude == -46.6333
+    assert updated.location_display_name == "São Paulo, Brazil"
+
+
+@pytest.mark.asyncio
+async def test_update_project_location_partial(db_session) -> None:
+    lang = await make_language(db_session, code="kos")
+    project = await make_project(
+        db_session,
+        language_id=lang.id,
+        name="Partial",
+        latitude=-23.0,
+        longitude=-46.0,
+        location_display_name="Somewhere",
+    )
+    updated = await project_service.update_project_location(
+        db_session, project.id, location_display_name="Updated Place Name"
+    )
+    assert updated.latitude == -23.0
+    assert updated.longitude == -46.0
+    assert updated.location_display_name == "Updated Place Name"
+
+
+@pytest.mark.asyncio
+async def test_update_project_location_raises_when_not_found(db_session) -> None:
+    with pytest.raises(NotFoundError, match="Project not found"):
+        await project_service.update_project_location(
+            db_session,
+            "00000000-0000-0000-0000-000000000000",
+            latitude=0.0,
+            longitude=0.0,
+        )
+
+
+@pytest.mark.asyncio
 async def test_get_project_by_id(db_session) -> None:
     lang = await make_language(db_session, code="tst")
     created = await make_project(db_session, language_id=lang.id, name="P1")
