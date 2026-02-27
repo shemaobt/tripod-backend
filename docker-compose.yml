@@ -1,0 +1,37 @@
+services:
+  gcp-secrets:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
+    container_name: tripod_backend_gcp_secrets
+    environment:
+      SECRETS_PROJECT_ID: ${SECRETS_PROJECT_ID:-shemaobt-secrets}
+    volumes:
+      - gcp_secrets_env:/secrets
+      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
+    command: >
+      sh -c "echo DATABASE_URL=$$(gcloud secrets versions access latest --secret=tripod_backend_neon_database_url_local --project=$$SECRETS_PROJECT_ID | tr -d '\n') > /secrets/.env &&
+      echo JWT_SECRET_KEY=$$(gcloud secrets versions access latest --secret=tripod_backend_jwt_secret --project=$$SECRETS_PROJECT_ID | tr -d '\n') >> /secrets/.env"
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: tripod_backend
+    container_name: tripod_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - backend_venv:/app/.venv
+      - gcp_secrets_env:/run/secrets:ro
+    depends_on:
+      gcp-secrets:
+        condition: service_completed_successfully
+    command: >
+      sh -c "set -a && . /run/secrets/.env && set +a &&
+      uv run alembic upgrade head &&
+      uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  backend_venv:
+  gcp_secrets_env:

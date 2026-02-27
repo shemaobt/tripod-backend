@@ -1,0 +1,93 @@
+@baseUrl = http://localhost:8000
+@accessToken = {{auth_response.response.body.tokens.access_token}}
+@refreshToken = {{auth_response.response.body.tokens.refresh_token}}
+
+### Health
+GET {{baseUrl}}/health
+
+### Auth: Signup
+# @name auth_signup
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "display_name": "Test User"
+}
+
+### Auth: Login
+# @name auth_response
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Auth: Refresh
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Auth: Logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Auth: Me (requires login first)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Auth: My roles (all apps)
+GET {{baseUrl}}/api/auth/my-roles
+Authorization: Bearer {{accessToken}}
+
+### Auth: My roles (filter by app)
+GET {{baseUrl}}/api/auth/my-roles?app_key=tripod-studio
+Authorization: Bearer {{accessToken}}
+
+### Roles: Check (requires auth)
+GET {{baseUrl}}/api/roles/check?user_id=USER_ID&app_key=tripod-studio&role_key=admin
+Authorization: Bearer {{accessToken}}
+
+### Roles: Assign (requires auth)
+POST {{baseUrl}}/api/roles/assign
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "target_user_id": "USER_ID",
+  "app_key": "tripod-studio",
+  "role_key": "admin"
+}
+
+### Roles: Revoke (requires auth)
+POST {{baseUrl}}/api/roles/revoke
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "target_user_id": "USER_ID",
+  "app_key": "tripod-studio",
+  "role_key": "admin"
+}
+
+### Error: No auth (401 + code UNAUTHORIZED)
+GET {{baseUrl}}/api/roles/check?user_id=u&app_key=tripod-studio&role_key=admin
+
+### Error: Invalid credentials
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
