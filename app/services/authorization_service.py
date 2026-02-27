@@ -126,7 +126,9 @@ async def revoke_role(
     return assignment
 
 
-async def list_roles(db: AsyncSession, user_id: str, app_key: str | None = None) -> list[tuple[str, str]]:
+async def list_roles(
+    db: AsyncSession, user_id: str, app_key: str | None = None
+) -> list[tuple[str, str]]:
     """List active role keys for user, optionally filtered by app."""
     stmt = (
         select(App.app_key, Role.role_key)

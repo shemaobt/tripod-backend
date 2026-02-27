@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from fastapi import Depends, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +9,7 @@ from app.core.exceptions import AuthorizationError
 from app.db.models.auth import User
 from app.services import auth_service, authorization_service
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 async def get_current_user(

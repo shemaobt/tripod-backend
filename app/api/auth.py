@@ -28,7 +28,7 @@ def _user_response(user: User) -> UserResponse:
     )
 
 
-@router.post('/signup', response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def signup(payload: UserSignupRequest, db: AsyncSession = Depends(get_db)) -> AuthResponse:
     user = await auth_service.signup_user(db, payload)
     access_token, refresh_token = await auth_service.issue_tokens(db, user)
@@ -38,7 +38,7 @@ async def signup(payload: UserSignupRequest, db: AsyncSession = Depends(get_db))
     )
 
 
-@router.post('/login', response_model=AuthResponse)
+@router.post("/login", response_model=AuthResponse)
 async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)) -> AuthResponse:
     user = await auth_service.authenticate_user(db, payload.email, payload.password)
     access_token, refresh_token = await auth_service.issue_tokens(db, user)
@@ -48,23 +48,25 @@ async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)) -
     )
 
 
-@router.post('/refresh', response_model=TokenResponse)
-async def refresh(payload: TokenRefreshRequest, db: AsyncSession = Depends(get_db)) -> TokenResponse:
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh(
+    payload: TokenRefreshRequest, db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
     access_token = await auth_service.refresh_access_token(db, payload.refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=payload.refresh_token)
 
 
-@router.post('/logout', status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(payload: TokenRefreshRequest, db: AsyncSession = Depends(get_db)) -> None:
     await auth_service.revoke_refresh_token(db, payload.refresh_token)
 
 
-@router.get('/me', response_model=UserResponse)
+@router.get("/me", response_model=UserResponse)
 async def me(user: User = Depends(get_current_user)) -> UserResponse:
     return _user_response(user)
 
 
-@router.get('/my-roles', response_model=list[MyRoleResponse])
+@router.get("/my-roles", response_model=list[MyRoleResponse])
 async def my_roles(
     app_key: str | None = Query(default=None),
     user: User = Depends(get_current_user),

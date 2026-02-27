@@ -1,4 +1,4 @@
-from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 
 def async_database_url(url: str) -> str:

@@ -36,7 +36,7 @@ async def seed() -> None:
                         Role(
                             app_id=app.id,
                             role_key=role_key,
-                            label=role_key.replace('-', ' ').title(),
+                            label=role_key.replace("-", " ").title(),
                             is_system=True,
                         )
                     )
