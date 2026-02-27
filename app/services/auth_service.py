@@ -117,7 +117,10 @@ async def refresh_access_token(db: AsyncSession, refresh_token: str) -> str:
     if not token_record:
         raise AuthenticationError("Refresh token revoked or missing")
 
-    if token_record.expires_at < datetime.now(UTC):
+    expires_at = token_record.expires_at
+    if getattr(expires_at, "tzinfo", None) is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at < datetime.now(UTC):
         raise AuthenticationError("Refresh token expired")
 
     user = await get_user_by_id(db, payload["sub"])

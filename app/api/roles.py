@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.db.models.auth import User
 from app.models.schemas import (
-    RoleAssignRequest,
     RoleAssignmentResponse,
+    RoleAssignRequest,
     RoleCheckResponse,
     RoleRevokeRequest,
 )
@@ -15,7 +15,7 @@ from app.services import authorization_service
 router = APIRouter()
 
 
-@router.post('/assign', response_model=RoleAssignmentResponse)
+@router.post("/assign", response_model=RoleAssignmentResponse)
 async def assign_role(
     payload: RoleAssignRequest,
     db: AsyncSession = Depends(get_db),
@@ -37,7 +37,7 @@ async def assign_role(
     )
 
 
-@router.post('/revoke', response_model=RoleAssignmentResponse)
+@router.post("/revoke", response_model=RoleAssignmentResponse)
 async def revoke_role(
     payload: RoleRevokeRequest,
     db: AsyncSession = Depends(get_db),
@@ -59,7 +59,7 @@ async def revoke_role(
     )
 
 
-@router.get('/check', response_model=RoleCheckResponse)
+@router.get("/check", response_model=RoleCheckResponse)
 async def check_role(
     user_id: str = Query(...),
     app_key: str = Query(...),

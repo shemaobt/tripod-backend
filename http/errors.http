@@ -1,0 +1,27 @@
+@baseUrl = http://localhost:8000
+
+### 401 — roles check without token
+GET {{baseUrl}}/api/roles/check?user_id=u&app_key=tripod-studio&role_key=admin
+
+### 401 — invalid credentials at login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
+
+### 401 — invalid or expired access token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid.or.expired.jwt
+
+### 409 — signup with existing email (run after first signup)
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "display_name": "Duplicate"
+}

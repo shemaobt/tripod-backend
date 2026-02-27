@@ -9,7 +9,7 @@ from app.core.database import Base
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
@@ -24,7 +24,7 @@ class User(Base):
 
 
 class App(Base):
-    __tablename__ = 'apps'
+    __tablename__ = "apps"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     app_key: Mapped[str] = mapped_column(String(100), unique=True, index=True)
@@ -34,11 +34,11 @@ class App(Base):
 
 
 class Role(Base):
-    __tablename__ = 'roles'
-    __table_args__ = (UniqueConstraint('app_id', 'role_key', name='uq_roles_app_role_key'),)
+    __tablename__ = "roles"
+    __table_args__ = (UniqueConstraint("app_id", "role_key", name="uq_roles_app_role_key"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    app_id: Mapped[str] = mapped_column(ForeignKey('apps.id', ondelete='CASCADE'), index=True)
+    app_id: Mapped[str] = mapped_column(ForeignKey("apps.id", ondelete="CASCADE"), index=True)
     role_key: Mapped[str] = mapped_column(String(100))
     label: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -47,42 +47,48 @@ class Role(Base):
 
 
 class Permission(Base):
-    __tablename__ = 'permissions'
-    __table_args__ = (UniqueConstraint('app_id', 'permission_key', name='uq_permissions_app_permission_key'),)
+    __tablename__ = "permissions"
+    __table_args__ = (
+        UniqueConstraint("app_id", "permission_key", name="uq_permissions_app_permission_key"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    app_id: Mapped[str] = mapped_column(ForeignKey('apps.id', ondelete='CASCADE'), index=True)
+    app_id: Mapped[str] = mapped_column(ForeignKey("apps.id", ondelete="CASCADE"), index=True)
     permission_key: Mapped[str] = mapped_column(String(120))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class RolePermission(Base):
-    __tablename__ = 'role_permissions'
-    __table_args__ = (UniqueConstraint('role_id', 'permission_id', name='uq_role_permissions'),)
+    __tablename__ = "role_permissions"
+    __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permissions"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    role_id: Mapped[str] = mapped_column(ForeignKey('roles.id', ondelete='CASCADE'), index=True)
-    permission_id: Mapped[str] = mapped_column(ForeignKey('permissions.id', ondelete='CASCADE'), index=True)
+    role_id: Mapped[str] = mapped_column(ForeignKey("roles.id", ondelete="CASCADE"), index=True)
+    permission_id: Mapped[str] = mapped_column(
+        ForeignKey("permissions.id", ondelete="CASCADE"), index=True
+    )
 
 
 class UserAppRole(Base):
-    __tablename__ = 'user_app_roles'
+    __tablename__ = "user_app_roles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    app_id: Mapped[str] = mapped_column(ForeignKey('apps.id', ondelete='CASCADE'), index=True)
-    role_id: Mapped[str] = mapped_column(ForeignKey('roles.id', ondelete='CASCADE'), index=True)
-    granted_by: Mapped[str | None] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    app_id: Mapped[str] = mapped_column(ForeignKey("apps.id", ondelete="CASCADE"), index=True)
+    role_id: Mapped[str] = mapped_column(ForeignKey("roles.id", ondelete="CASCADE"), index=True)
+    granted_by: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class RefreshToken(Base):
-    __tablename__ = 'refresh_tokens'
+    __tablename__ = "refresh_tokens"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

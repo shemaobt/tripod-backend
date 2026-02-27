@@ -7,18 +7,17 @@ from jose import JWTError, jwt
 from app.core.config import get_settings
 from app.core.exceptions import InvalidTokenError
 
-
 settings = get_settings()
 
 
 def create_token(subject: str, token_type: str, expires_minutes: int) -> str:
     now = datetime.now(UTC)
     payload = {
-        'sub': subject,
-        'type': token_type,
-        'jti': str(uuid4()),
-        'iat': now,
-        'exp': now + timedelta(minutes=expires_minutes),
+        "sub": subject,
+        "type": token_type,
+        "jti": str(uuid4()),
+        "iat": now,
+        "exp": now + timedelta(minutes=expires_minutes),
     }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
