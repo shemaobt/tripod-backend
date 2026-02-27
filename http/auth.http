@@ -1,0 +1,58 @@
+@baseUrl = http://localhost:8000
+
+### Signup
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "display_name": "Test User"
+}
+
+### Signup (minimal, no display_name)
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "minimal@example.com",
+  "password": "password123"
+}
+
+### Login — run this first; token is used below
+# @name auth_login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Me (current user; uses token from login above)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{auth_login.response.body.tokens.access_token}}
+
+### Refresh access token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{auth_login.response.body.tokens.refresh_token}}"
+}
+
+### Logout (revoke refresh token)
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{auth_login.response.body.tokens.refresh_token}}"
+}
+
+### My roles (all apps)
+GET {{baseUrl}}/api/auth/my-roles
+Authorization: Bearer {{auth_login.response.body.tokens.access_token}}
+
+### My roles (filter by app)
+GET {{baseUrl}}/api/auth/my-roles?app_key=tripod-studio
+Authorization: Bearer {{auth_login.response.body.tokens.access_token}}

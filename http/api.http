@@ -1,12 +1,14 @@
 @baseUrl = http://localhost:8000
+# Token and refresh are set from the named login request below
 @accessToken = {{auth_response.response.body.tokens.access_token}}
 @refreshToken = {{auth_response.response.body.tokens.refresh_token}}
 
 ### Health
 GET {{baseUrl}}/health
 
+### ——— Auth ———
+
 ### Auth: Signup
-# @name auth_signup
 POST {{baseUrl}}/api/auth/signup
 Content-Type: application/json
 
@@ -16,7 +18,7 @@ Content-Type: application/json
   "display_name": "Test User"
 }
 
-### Auth: Login
+### Auth: Login (run this before roles; token is used automatically)
 # @name auth_response
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -42,7 +44,7 @@ Content-Type: application/json
   "refresh_token": "{{refreshToken}}"
 }
 
-### Auth: Me (requires login first)
+### Auth: Me
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{accessToken}}
 
@@ -54,11 +56,13 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/auth/my-roles?app_key=tripod-studio
 Authorization: Bearer {{accessToken}}
 
-### Roles: Check (requires auth)
+### ——— Roles ———
+
+### Roles: Check
 GET {{baseUrl}}/api/roles/check?user_id=USER_ID&app_key=tripod-studio&role_key=admin
 Authorization: Bearer {{accessToken}}
 
-### Roles: Assign (requires auth)
+### Roles: Assign
 POST {{baseUrl}}/api/roles/assign
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -69,7 +73,7 @@ Authorization: Bearer {{accessToken}}
   "role_key": "admin"
 }
 
-### Roles: Revoke (requires auth)
+### Roles: Revoke
 POST {{baseUrl}}/api/roles/revoke
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -80,10 +84,12 @@ Authorization: Bearer {{accessToken}}
   "role_key": "admin"
 }
 
-### Error: No auth (401 + code UNAUTHORIZED)
+### ——— Error examples ———
+
+### Error: No auth (401)
 GET {{baseUrl}}/api/roles/check?user_id=u&app_key=tripod-studio&role_key=admin
 
-### Error: Invalid credentials
+### Error: Invalid credentials (401)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 

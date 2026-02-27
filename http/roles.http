@@ -1,0 +1,40 @@
+@baseUrl = http://localhost:8000
+# Set after running Auth: Login in auth.http and copying tokens.access_token from the response
+@accessToken =
+
+### Check if user has role
+GET {{baseUrl}}/api/roles/check?user_id=USER_ID&app_key=tripod-studio&role_key=admin
+Authorization: Bearer {{accessToken}}
+
+### Assign role to user
+POST {{baseUrl}}/api/roles/assign
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "target_user_id": "USER_ID",
+  "app_key": "tripod-studio",
+  "role_key": "admin"
+}
+
+### Assign member role
+POST {{baseUrl}}/api/roles/assign
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "target_user_id": "USER_ID",
+  "app_key": "tripod-studio",
+  "role_key": "member"
+}
+
+### Revoke role
+POST {{baseUrl}}/api/roles/revoke
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "target_user_id": "USER_ID",
+  "app_key": "tripod-studio",
+  "role_key": "admin"
+}
