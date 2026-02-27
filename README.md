@@ -12,6 +12,18 @@ Shared backend platform for Tripod systems using FastAPI, SQLAlchemy async, Alem
 - Docker + docker-compose
 - Cloud Run deploy (GCP)
 
+## CI/CD (GitHub Actions)
+
+Deploys to Cloud Run on push to `main`. Configure these **repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `GCP_PROJECT_ID` | GCP project ID where Cloud Run and Artifact Registry run |
+| `GCP_SA_KEY` | Full JSON key of a service account with Cloud Run Admin, Artifact Registry Writer, and Secret Manager Secret Accessor |
+| `SECRETS_PROJECT_NUMBER` | Project *number* (not ID) of the project that holds Secret Manager secrets (`tripod_backend_neon_database_url`, `tripod_backend_jwt_secret`) |
+
+If any of these are missing, the workflow fails at "Check required secrets" with an error naming the missing one.
+
 ## Local setup
 
 1. Ensure GCP auth is configured locally:
