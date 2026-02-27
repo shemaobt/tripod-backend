@@ -24,57 +24,50 @@ Deploys to Cloud Run on push to `main`. Configure these **repository secrets** (
 
 If any of these are missing, the workflow fails at "Check required secrets" with an error naming the missing one.
 
-## Local setup
+## Local setup (GCP Secret Manager)
 
-1. Ensure GCP auth is configured locally:
+Local dev uses the same pattern as production: secrets come from GCP Secret Manager.
+
+1. Authenticate with GCP:
 
 ```bash
 gcloud auth application-default login
 ```
 
-2. Register backend secrets in GCP Secret Manager.
+2. Create or update secrets in GCP Secret Manager (project: `SECRETS_PROJECT_ID`, e.g. `shemaobt-secrets`).
 
-   **Local runs (docker-compose)** use a dedicated Neon DB secret so you can point at a test/dev database without affecting production:
+   **Neon DB URL for local** (use a dev/test branch so production is unaffected):
 
 ```bash
 printf '%s' '<YOUR_NEON_DATABASE_URL>' | gcloud secrets create tripod_backend_neon_database_url_local --data-file=- --project <SECRETS_PROJECT_ID>
-```
-
-   If the secret already exists, add a new version:
-
-```bash
+# If the secret exists, add a new version:
 printf '%s' '<YOUR_NEON_DATABASE_URL>' | gcloud secrets versions add tripod_backend_neon_database_url_local --data-file=- --project <SECRETS_PROJECT_ID>
 ```
 
-   **JWT secret** (used both locally and in CI; create once):
+   **JWT secret** (shared by local and CI; create once):
 
 ```bash
 printf '%s' '<JWT_SECRET>' | gcloud secrets create tripod_backend_jwt_secret --data-file=- --project <SECRETS_PROJECT_ID>
+# If the secret exists:
+printf '%s' '<JWT_SECRET>' | gcloud secrets versions add tripod_backend_jwt_secret --data-file=- --project <SECRETS_PROJECT_ID>
 ```
 
-   **Production (Cloud Run)** uses a separate DB secret. Configure it in the same project (or the one used in deploy workflow):
+   **Production Neon URL** (used by Cloud Run deploy):
 
 ```bash
 printf '%s' '<PRODUCTION_NEON_DATABASE_URL>' | gcloud secrets create tripod_backend_neon_database_url --data-file=- --project <SECRETS_PROJECT_ID>
 ```
 
-   Use `gcloud secrets versions add ...` instead of `create` if the secret already exists.
-
-3. Start backend with docker compose:
+3. Start the backend (secrets are fetched into a volume and loaded at startup):
 
 ```bash
 SECRETS_PROJECT_ID=<SECRETS_PROJECT_ID> docker compose up --build backend
 ```
 
-4. Run migrations and seed roles:
+4. Run migrations, seed, or tests (same env is loaded from the secrets volume):
 
 ```bash
 SECRETS_PROJECT_ID=<SECRETS_PROJECT_ID> docker compose run --rm backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
 SECRETS_PROJECT_ID=<SECRETS_PROJECT_ID> docker compose run --rm backend sh -c "set -a && . /run/secrets/.env && set +a && uv run python scripts/seed_apps_roles.py"
-```
-
-5. Run tests:
-
-```bash
 SECRETS_PROJECT_ID=<SECRETS_PROJECT_ID> docker compose run --rm backend sh -c "set -a && . /run/secrets/.env && set +a && uv run pytest tests"
 ```
