@@ -1,0 +1,45 @@
+from datetime import UTC, datetime
+
+from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import RoleError
+from app.db.models.auth import User, UserAppRole
+from app.services.authorization.assert_can_manage_roles import assert_can_manage_roles
+from app.services.authorization.get_app_by_key import get_app_by_key
+from app.services.authorization.get_role import get_role
+
+
+async def revoke_role(
+    db: AsyncSession,
+    actor_user: User,
+    target_user_id: str,
+    app_key: str,
+    role_key: str,
+) -> UserAppRole:
+    """Revoke an active role assignment."""
+    await assert_can_manage_roles(db, actor_user, app_key)
+
+    app = await get_app_by_key(db, app_key)
+    if not app:
+        raise RoleError("App not found")
+
+    role = await get_role(db, app.id, role_key)
+    if not role:
+        raise RoleError("Role not found")
+
+    stmt: Select[tuple[UserAppRole]] = select(UserAppRole).where(
+        UserAppRole.user_id == target_user_id,
+        UserAppRole.app_id == app.id,
+        UserAppRole.role_id == role.id,
+        UserAppRole.revoked_at.is_(None),
+    )
+    result = await db.execute(stmt)
+    assignment = result.scalar_one_or_none()
+    if not assignment:
+        raise RoleError("Active assignment not found")
+
+    assignment.revoked_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(assignment)
+    return assignment

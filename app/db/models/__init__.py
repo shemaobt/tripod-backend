@@ -7,10 +7,10 @@ from app.db.models.auth import (
     User,
     UserAppRole,
 )
+from app.db.models.language import Language
+from app.db.models.org import Organization, OrganizationMember
+from app.db.models.phase import Phase, PhaseDependency, ProjectPhase
 from app.db.models.project import (
-    Language,
-    Organization,
-    OrganizationMember,
     Project,
     ProjectOrganizationAccess,
     ProjectUserAccess,
@@ -22,8 +22,11 @@ __all__ = [
     "Organization",
     "OrganizationMember",
     "Permission",
+    "Phase",
+    "PhaseDependency",
     "Project",
     "ProjectOrganizationAccess",
+    "ProjectPhase",
     "ProjectUserAccess",
     "RefreshToken",
     "Role",

@@ -5,7 +5,7 @@ from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.db.models.auth import User
-from app.models.schemas import LanguageCreate, LanguageResponse
+from app.models.language import LanguageCreate, LanguageResponse
 from app.services import language_service
 
 router = APIRouter()
