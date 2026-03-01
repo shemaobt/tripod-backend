@@ -3,15 +3,15 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import App, RefreshToken, Role, User, UserAppRole
+from app.db.models.language import Language
+from app.db.models.org import Organization, OrganizationMember
+from app.db.models.phase import Phase, PhaseDependency, ProjectPhase
 from app.db.models.project import (
-    Language,
-    Organization,
-    OrganizationMember,
     Project,
     ProjectOrganizationAccess,
     ProjectUserAccess,
 )
-from app.services.auth_service import hash_password
+from app.services.auth.hash_password import hash_password
 
 
 async def make_user(
@@ -187,6 +187,44 @@ async def make_project_organization_access(
     await db.commit()
     await db.refresh(access)
     return access
+
+
+async def make_phase(
+    db: AsyncSession,
+    *,
+    name: str = "Test Phase",
+    description: str | None = None,
+    status: str = "pending",
+) -> Phase:
+    phase = Phase(name=name, description=description, status=status)
+    db.add(phase)
+    await db.commit()
+    await db.refresh(phase)
+    return phase
+
+
+async def make_project_phase(
+    db: AsyncSession,
+    project_id: str,
+    phase_id: str,
+) -> ProjectPhase:
+    link = ProjectPhase(project_id=project_id, phase_id=phase_id)
+    db.add(link)
+    await db.commit()
+    await db.refresh(link)
+    return link
+
+
+async def make_phase_dependency(
+    db: AsyncSession,
+    phase_id: str,
+    depends_on_id: str,
+) -> PhaseDependency:
+    dep = PhaseDependency(phase_id=phase_id, depends_on_id=depends_on_id)
+    db.add(dep)
+    await db.commit()
+    await db.refresh(dep)
+    return dep
 
 
 async def make_refresh_token(
