@@ -12,16 +12,16 @@ from app.services.phase.remove_dependency import remove_dependency
 from app.services.phase.update_phase import update_phase
 
 __all__ = [
-    "get_phase_by_id",
-    "create_phase",
-    "list_phases",
-    "get_phase_or_404",
-    "update_phase",
-    "delete_phase",
-    "attach_phase_to_project",
-    "detach_phase_from_project",
-    "list_projects_for_phase",
     "add_dependency",
-    "remove_dependency",
+    "attach_phase_to_project",
+    "create_phase",
+    "delete_phase",
+    "detach_phase_from_project",
+    "get_phase_by_id",
+    "get_phase_or_404",
     "list_dependencies",
+    "list_phases",
+    "list_projects_for_phase",
+    "remove_dependency",
+    "update_phase",
 ]

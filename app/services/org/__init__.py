@@ -7,11 +7,11 @@ from app.services.org.is_member import is_member
 from app.services.org.list_organizations import list_organizations
 
 __all__ = [
-    "list_organizations",
+    "add_member",
+    "create_organization",
     "get_organization_by_id",
     "get_organization_by_slug",
-    "create_organization",
-    "add_member",
     "get_organization_or_404",
     "is_member",
+    "list_organizations",
 ]

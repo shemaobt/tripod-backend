@@ -7,6 +7,7 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.languages import router as languages_router
 from app.api.organizations import router as organizations_router
+from app.api.phases import router as phases_router
 from app.api.projects import router as projects_router
 from app.api.roles import router as roles_router
 from app.core.config import get_settings
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(languages_router, prefix="/api/languages", tags=["languages"])
     app.include_router(organizations_router, prefix="/api/organizations", tags=["organizations"])
     app.include_router(projects_router, prefix="/api/projects", tags=["projects"])
+    app.include_router(phases_router, prefix="/api/phases", tags=["phases"])
 
     register_exception_handlers(app)
 

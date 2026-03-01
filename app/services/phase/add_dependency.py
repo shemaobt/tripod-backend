@@ -11,7 +11,7 @@ async def add_dependency(
     phase_id: str,
     depends_on_id: str,
 ) -> PhaseDependency:
-    phase = await get_phase_or_404(db, phase_id)
+    await get_phase_or_404(db, phase_id)
     await get_phase_or_404(db, depends_on_id)
     if phase_id == depends_on_id:
         raise ConflictError("Phase cannot depend on itself")

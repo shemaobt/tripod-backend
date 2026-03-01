@@ -5,7 +5,8 @@ from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AuthorizationError
 from app.db.models.auth import User
-from app.models.schemas import (
+from app.models.phase import AttachPhaseRequest, PhaseResponse
+from app.models.project import (
     ProjectCreate,
     ProjectGrantOrganizationAccess,
     ProjectGrantUserAccess,
@@ -14,7 +15,7 @@ from app.models.schemas import (
     ProjectResponse,
     ProjectUserAccessResponse,
 )
-from app.services import project_service
+from app.services import phase_service, project_service
 
 router = APIRouter()
 
@@ -120,3 +121,45 @@ async def grant_organization_access(
         db, project_id, payload.organization_id
     )
     return ProjectOrganizationAccessResponse.model_validate(access)
+
+
+@router.get("/{project_id}/phases", response_model=list[PhaseResponse])
+async def list_project_phases(
+    project_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[PhaseResponse]:
+    allowed = await project_service.can_access_project(db, user.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    phases = await phase_service.list_phases(db, project_id=project_id)
+    return [PhaseResponse.model_validate(p) for p in phases]
+
+
+@router.post(
+    "/{project_id}/phases",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def attach_phase_to_project(
+    project_id: str,
+    payload: AttachPhaseRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    allowed = await project_service.can_access_project(db, user.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await phase_service.attach_phase_to_project(db, project_id, payload.phase_id)
+
+
+@router.delete("/{project_id}/phases/{phase_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def detach_phase_from_project(
+    project_id: str,
+    phase_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    allowed = await project_service.can_access_project(db, user.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await phase_service.detach_phase_from_project(db, project_id, phase_id)

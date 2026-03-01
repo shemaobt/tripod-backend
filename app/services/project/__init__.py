@@ -10,12 +10,12 @@ from app.services.project.list_projects_accessible_to_user import (
 from app.services.project.update_project_location import update_project_location
 
 __all__ = [
-    "get_project_by_id",
-    "create_project",
     "can_access_project",
-    "list_projects_accessible_to_user",
-    "grant_user_access",
-    "grant_organization_access",
+    "create_project",
+    "get_project_by_id",
     "get_project_or_404",
+    "grant_organization_access",
+    "grant_user_access",
+    "list_projects_accessible_to_user",
     "update_project_location",
 ]

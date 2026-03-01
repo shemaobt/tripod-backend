@@ -26,7 +26,9 @@ class ProjectPhase(Base):
     __table_args__ = (UniqueConstraint("project_id", "phase_id", name="uq_project_phase"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[str] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
     phase_id: Mapped[str] = mapped_column(ForeignKey("phases.id", ondelete="CASCADE"), index=True)
 
 
@@ -36,4 +38,6 @@ class PhaseDependency(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     phase_id: Mapped[str] = mapped_column(ForeignKey("phases.id", ondelete="CASCADE"), index=True)
-    depends_on_id: Mapped[str] = mapped_column(ForeignKey("phases.id", ondelete="CASCADE"), index=True)
+    depends_on_id: Mapped[str] = mapped_column(
+        ForeignKey("phases.id", ondelete="CASCADE"), index=True
+    )

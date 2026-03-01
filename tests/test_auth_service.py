@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.exceptions import AuthenticationError, AuthorizationError, ConflictError
-from app.models.schemas import UserSignupRequest
+from app.models.auth import UserSignupRequest
 from app.services import auth_service
 from app.utils.jwt import decode_token
 from tests.baker import make_user
