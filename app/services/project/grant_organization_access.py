@@ -9,9 +9,7 @@ async def grant_organization_access(
     project_id: str,
     organization_id: str,
 ) -> ProjectOrganizationAccess:
-    existing: Select[tuple[ProjectOrganizationAccess]] = select(
-        ProjectOrganizationAccess
-    ).where(
+    existing: Select[tuple[ProjectOrganizationAccess]] = select(ProjectOrganizationAccess).where(
         ProjectOrganizationAccess.project_id == project_id,
         ProjectOrganizationAccess.organization_id == organization_id,
     )
