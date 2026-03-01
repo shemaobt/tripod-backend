@@ -1,89 +1,87 @@
 # tripod-backend
 
-Shared API backend for Tripod: a platform that powers multiple language and translation tools. This service handles authentication (signup, login, JWT), app-scoped roles (RBAC), and core data such as languages, projects, and organizations. Frontend apps (e.g. Tripod Studio) call this API and rely on it for identity and access control.
+Shared API backend for Tripod — a platform powering multiple language and translation tools. Handles authentication (JWT), app-scoped RBAC, and core data (languages, projects, organizations, phases).
 
-**Stack:** FastAPI, SQLAlchemy 2 (async + asyncpg), Alembic, PostgreSQL (Neon), uv, Docker, Cloud Run.
+**Stack:** FastAPI · SQLAlchemy 2 async · Alembic · PostgreSQL (Neon) · uv · Docker · Cloud Run
 
-Projects can have an optional location: `latitude`, `longitude`, and `location_display_name` are stored so clients can show projects on a map. The UI should use a geocoding/places API (e.g. Google Maps Places Autocomplete) to let users search for a place and then send the chosen coordinates and display name to the backend; the backend does not call external map APIs.
+## Architecture
+
+```
+app/
+├── api/           # FastAPI routers (one file per domain: auth, languages, orgs, projects, phases, roles)
+├── core/          # Config, database engine, middleware, exceptions
+├── db/
+│   └── models/    # SQLAlchemy ORM models, one file per domain:
+│                  #   auth.py · language.py · org.py · phase.py · project.py
+├── models/        # Pydantic request/response schemas, mirroring db/models structure
+└── services/      # Business logic, one package per domain:
+                   #   auth/ · authorization/ · language/ · org/ · phase/ · project/
+                   # Each package exposes one function per file.
+alembic/           # Database migrations
+scripts/           # One-off scripts (e.g. seed_apps_roles.py)
+tests/             # Async pytest suite, one file per service domain
+http/              # .http request examples (VS Code REST Client / JetBrains)
+```
+
+Each layer has a single responsibility: routers call services, services use db models, Pydantic models handle serialization. No business logic lives in routers; no DB calls live outside services.
 
 ## CI/CD (GitHub Actions)
 
-- **On PR:** lint and test run; migrations are **not** applied.
-- **On push to `main`:** deploy workflow builds, runs `alembic upgrade head` against the production DB, then deploys to Cloud Run.
+| Trigger | What happens |
+|---|---|
+| Pull request | ruff check + ruff format + pytest |
+| Push to `main` | Build image → `alembic upgrade head` → deploy to Cloud Run |
 
-Set these repository secrets (Settings → Secrets and variables → Actions):
+Secrets required in GitHub Actions (Settings → Secrets):
 
 | Secret | Purpose |
-|--------|---------|
-| `GCP_PROJECT_ID` | Cloud Run and Artifact Registry project |
-| `GCP_SA_KEY` | Service account JSON (Cloud Run Admin, Artifact Registry Writer, Secret Manager Secret Accessor) |
-| `SECRETS_PROJECT_NUMBER` | Project *number* for the project holding Secret Manager secrets (`tripod_backend_neon_database_url`, `tripod_backend_jwt_secret`) |
+|---|---|
+| `GCP_PROJECT_ID` | Artifact Registry & Cloud Run project |
+| `GCP_SA_KEY` | Service account JSON (Cloud Run Admin, Artifact Registry Writer, Secret Manager Accessor) |
+| `SECRETS_PROJECT_NUMBER` | Project number for Secret Manager (`tripod_backend_neon_database_url`, `tripod_backend_jwt_secret`) |
 
-The workflow fails with a clear error if any secret is missing.
+Config is pulled from GCP Secret Manager at container startup — no env vars are set manually in production or CI.
 
-## Local setup (GCP Secret Manager)
+## Local development
 
-Secrets are loaded from GCP Secret Manager (same pattern as production).
+Secrets are fetched from GCP Secret Manager via a sidecar (`gcp-secrets`) on startup.
 
-1. **Authenticate:** `gcloud auth application-default login`
+```bash
+# 1. Authenticate
+gcloud auth application-default login
 
-2. **Create/update secrets** in the secrets project (e.g. `shemaobt-secrets`):
+# 2. Start the stack (SECRETS_PROJECT_ID tells the sidecar which GCP project to read secrets from)
+SECRETS_PROJECT_ID=<id> docker compose up --build backend
 
-   **Neon DB (local):** use a dev branch to avoid touching production.
+# 3. In another terminal — apply migrations, seed, run tests
+docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
+docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run python scripts/seed_apps_roles.py"
+docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run pytest tests"
+```
 
-   ```bash
-   printf '%s' '<YOUR_NEON_DATABASE_URL>' | gcloud secrets create tripod_backend_neon_database_url_local --data-file=- --project <SECRETS_PROJECT_ID>
-   # Or add a new version if it exists:
-   printf '%s' '<YOUR_NEON_DATABASE_URL>' | gcloud secrets versions add tripod_backend_neon_database_url_local --data-file=- --project <SECRETS_PROJECT_ID>
-   ```
-
-   **JWT secret:**
-
-   ```bash
-   printf '%s' '<JWT_SECRET>' | gcloud secrets create tripod_backend_jwt_secret --data-file=- --project <SECRETS_PROJECT_ID>
-   # Or: gcloud secrets versions add tripod_backend_jwt_secret --data-file=- ...
-   ```
-
-   **Production Neon URL** (for Cloud Run): create/update `tripod_backend_neon_database_url` in the same project.
-
-3. **Start the backend:** `SECRETS_PROJECT_ID=<ID> docker compose up --build backend`
-
-   `SECRETS_PROJECT_ID` is only used when the stack starts: the `gcp-secrets` container reads it and fetches `DATABASE_URL` and `JWT_SECRET_KEY` from that GCP project into a shared volume. The backend then loads them at startup. You don’t need it for one-off commands.
-
-4. **Apply migrations (manual), seed, tests** — migrations on your local/test DB are not run automatically; you run them yourself when needed. With the backend running, in another terminal:
-
-   ```bash
-   docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
-   docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run python scripts/seed_apps_roles.py"
-   docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run pytest tests"
-   ```
-
-   See **Migrations** below for when and how to run migrations locally. The `set -a && . /run/secrets/.env && set +a` loads the env file the backend uses. If the stack isn’t running, use `SECRETS_PROJECT_ID=<ID> docker compose run --rm backend sh -c "..."` so `gcp-secrets` can run first and fill the volume.
+> Use a Neon dev branch for local work to avoid touching production data.
 
 ## Migrations
 
-- **Creating a migration** (when you add or change models): with the backend running and env loaded, run:
+```bash
+# Create (after changing models)
+docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic revision --autogenerate -m 'short description'"
 
-  ```bash
-  docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic revision --autogenerate -m 'short description'"
-  ```
+# Apply locally (manual — never run automatically against local DB)
+docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
+```
 
-  A new file appears in `alembic/versions/`. Review it, then commit it.
+Production migrations run automatically on deploy (after merge to `main`).
 
-- **Applying migrations to your local / test database** is **manual**. Migrations are never applied automatically against your local DB. When you want to update the schema (e.g. after pulling new migrations or creating one), run:
+## Lint
 
-  ```bash
-  docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
-  ```
+```bash
+uv run ruff check . --fix
+uv run ruff format .
+```
 
-  Do this with the backend running (or use `SECRETS_PROJECT_ID=<ID> docker compose run --rm backend sh -c "..."` if the stack isn’t up). Do not run `upgrade head` against a shared or production DB from a branch.
+Or via Docker: `docker compose --profile lint run --rm lint`
 
-- **Production:** migrations are applied automatically only after the PR is merged to `main`; the deploy workflow runs `alembic upgrade head` before deploying. On PR we only run lint and tests (no migration apply).
+## API examples
 
-## Lint (Ruff)
-
-`docker compose --profile lint run --rm lint` runs `ruff check` and `ruff format --check`. To fix locally: `uv run ruff check . --fix` and `uv run ruff format .`.
-
-## API examples (.http)
-
-[`http/`](http/) contains request examples (health, auth, roles). Use with VS Code REST Client or JetBrains HTTP Client. See `http/README.md` for layout and token usage.
+[`http/`](http/) contains `.http` request files for health, auth, and roles. See [`http/README.md`](http/README.md) for token usage.
