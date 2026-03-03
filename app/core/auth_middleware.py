@@ -29,3 +29,11 @@ def require_role(app_key: str, role_key: str) -> Callable:
         return user
 
     return _check_role
+
+
+async def require_platform_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    if not user.is_platform_admin:
+        raise AuthorizationError("Forbidden")
+    return user
