@@ -11,9 +11,7 @@ async def get_bhsa_status() -> BHSAStatusResponse | Response:
     status = loader.get_status()
 
     if status["is_loaded"]:
-        return BHSAStatusResponse(
-            status="loaded", bhsa_loaded=True, message=status["message"]
-        )
+        return BHSAStatusResponse(status="loaded", bhsa_loaded=True, message=status["message"])
 
     if status["is_loading"]:
         return Response(
