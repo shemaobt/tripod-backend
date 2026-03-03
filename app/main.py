@@ -23,11 +23,11 @@ from app.services.bhsa import loader
 def _load_bhsa_background() -> None:
     """Load BHSA data in a background thread."""
     try:
-        print("[STARTUP] Loading BHSA data in background...")
+        print("[STARTUP] Loading BHSA data in background...", flush=True)
         loader.load()
-        print("[STARTUP] BHSA data loaded successfully!")
+        print("[STARTUP] BHSA data loaded successfully!", flush=True)
     except Exception as e:
-        print(f"[STARTUP] Failed to load BHSA data: {e}")
+        print(f"[STARTUP] Failed to load BHSA data: {e}", flush=True)
 
 
 @asynccontextmanager
