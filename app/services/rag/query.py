@@ -62,8 +62,7 @@ async def query(
     content = response.content
     if isinstance(content, list):
         content = "".join(
-            block.get("text", "") if isinstance(block, dict) else str(block)
-            for block in content
+            block.get("text", "") if isinstance(block, dict) else str(block) for block in content
         )
 
     return QueryResponse(

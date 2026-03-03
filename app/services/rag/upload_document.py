@@ -64,5 +64,3 @@ async def upload_document(
         namespace=namespace.value,
         chunk_count=len(chunks),
     )
-
-
