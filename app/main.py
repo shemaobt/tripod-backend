@@ -9,18 +9,22 @@ from app.api.languages import router as languages_router
 from app.api.organizations import router as organizations_router
 from app.api.phases import router as phases_router
 from app.api.projects import router as projects_router
+from app.api.rag import router as rag_router
 from app.api.roles import router as roles_router
 from app.core.config import get_settings
 from app.core.database import close_db, init_db
 from app.core.exceptions import register_exception_handlers
+from app.core.qdrant import close_qdrant, init_qdrant
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
+    await init_qdrant()
     try:
         yield
     finally:
+        await close_qdrant()
         await close_db()
 
 
@@ -43,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(organizations_router, prefix="/api/organizations", tags=["organizations"])
     app.include_router(projects_router, prefix="/api/projects", tags=["projects"])
     app.include_router(phases_router, prefix="/api/phases", tags=["phases"])
+    app.include_router(rag_router, prefix="/api/rag", tags=["rag"])
 
     register_exception_handlers(app)
 
