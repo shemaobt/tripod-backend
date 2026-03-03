@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, status
 
-from app.core.auth_middleware import get_current_user
+from app.core.auth_middleware import get_current_user, require_platform_admin
 from app.core.qdrant import get_qdrant_client
 from app.db.models.auth import User
 from app.models.rag import (
@@ -23,7 +23,7 @@ router = APIRouter()
 async def upload_document(
     namespace: RagNamespace,
     file: UploadFile,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_platform_admin),
 ) -> DocumentUploadResponse:
     if not file.filename or not file.filename.lower().endswith(".md"):
         from app.core.exceptions import ValidationError
@@ -61,7 +61,7 @@ async def list_documents(
 async def delete_document(
     namespace: RagNamespace,
     doc_id: str,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_platform_admin),
 ) -> dict:
     client = get_qdrant_client()
     deleted = await rag_service.delete_document(client, namespace, doc_id)
