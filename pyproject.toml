@@ -16,7 +16,11 @@ dependencies = [
     "python-jose[cryptography]==3.3.0",
     "passlib[bcrypt]==1.7.4",
     "python-multipart==0.0.9",
-    "httpx==0.28.0",
+    "httpx>=0.28.1",
+    "langchain-core>=0.3.83",
+    "langchain-text-splitters>=0.3.11",
+    "langchain-google-genai>=4.0.0",
+    "qdrant-client>=1.15.0,<1.17.0",
 ]
 
 [build-system]

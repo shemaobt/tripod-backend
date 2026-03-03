@@ -15,7 +15,10 @@ services:
         export CLOUDSDK_CONFIG=/tmp/gcloud
         DB_URL=$$(gcloud secrets versions access latest --secret=tripod_backend_neon_database_url_local --project=$$SECRETS_PROJECT_ID | tr -d '\n')
         JWT=$$(gcloud secrets versions access latest --secret=tripod_backend_jwt_secret --project=$$SECRETS_PROJECT_ID | tr -d '\n')
-        printf "DATABASE_URL='%s'\nJWT_SECRET_KEY='%s'\n" "$$DB_URL" "$$JWT" > /secrets/.env
+        QDRANT_URL=$$(gcloud secrets versions access latest --secret=tripod_backend_qdrant_url --project=$$SECRETS_PROJECT_ID | tr -d '\n')
+        QDRANT_API_KEY=$$(gcloud secrets versions access latest --secret=tripod_backend_qdrant_api_key --project=$$SECRETS_PROJECT_ID | tr -d '\n')
+        GOOGLE_API_KEY=$$(gcloud secrets versions access latest --secret=tripod_backend_google_api_key --project=$$SECRETS_PROJECT_ID | tr -d '\n')
+        printf "DATABASE_URL='%s'\nJWT_SECRET_KEY='%s'\nQDRANT_URL='%s'\nQDRANT_API_KEY='%s'\nGOOGLE_API_KEY='%s'\n" "$$DB_URL" "$$JWT" "$$QDRANT_URL" "$$QDRANT_API_KEY" "$$GOOGLE_API_KEY" > /secrets/.env
     restart: "no"
 
   backend:
