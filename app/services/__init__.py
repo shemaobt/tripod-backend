@@ -1,4 +1,5 @@
 from app.services import (
+    access_request,
     auth,
     authorization,
     language,
@@ -10,6 +11,7 @@ from app.services import (
 )
 
 # Expose sub-packages under backward-compatible names
+access_request_service = access_request
 auth_service = auth
 authorization_service = authorization
 language_service = language
@@ -20,6 +22,8 @@ project_service = project
 rag_service = rag
 
 __all__ = [
+    "access_request",
+    "access_request_service",
     "auth",
     "auth_service",
     "authorization",

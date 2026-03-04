@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.access_requests import router as access_requests_router
 from app.api.auth import router as auth_router
 from app.api.bhsa import router as bhsa_router
 from app.api.books import router as books_router
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health_router)
+    app.include_router(access_requests_router, prefix="/api/access-requests", tags=["access-requests"])
     app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
     app.include_router(roles_router, prefix="/api/roles", tags=["roles"])
     app.include_router(languages_router, prefix="/api/languages", tags=["languages"])

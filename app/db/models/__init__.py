@@ -1,4 +1,5 @@
 from app.db.models.auth import (
+    AccessRequest,
     App,
     Permission,
     RefreshToken,
@@ -23,6 +24,7 @@ from app.db.models.project import (
 )
 
 __all__ = [
+    "AccessRequest",
     "App",
     "BibleBook",
     "Language",
