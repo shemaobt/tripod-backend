@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import User
-from app.db.models.meaning_map import MeaningMap, Pericope
+from app.db.models.meaning_map import MeaningMap, MeaningMapFeedback, Pericope
 from app.models.meaning_map import PericopeWithStatusResponse
 
 
@@ -12,6 +12,17 @@ async def list_pericopes(
     analyst = User.__table__.alias("analyst")
     lock_user = User.__table__.alias("lock_user")
 
+    feedback_count = (
+        select(func.count())
+        .where(
+            MeaningMapFeedback.meaning_map_id == MeaningMap.id,
+            MeaningMapFeedback.resolved == False,  # noqa: E712
+        )
+        .correlate(MeaningMap)
+        .scalar_subquery()
+        .label("unresolved_feedback_count")
+    )
+
     stmt = (
         select(
             Pericope,
@@ -20,6 +31,7 @@ async def list_pericopes(
             MeaningMap.locked_by,
             lock_user.c.display_name.label("locked_by_name"),
             analyst.c.display_name.label("analyst_name"),
+            feedback_count,
         )
         .outerjoin(MeaningMap, MeaningMap.pericope_id == Pericope.id)
         .outerjoin(analyst, analyst.c.id == MeaningMap.analyst_id)
@@ -48,5 +60,6 @@ async def list_pericopes(
         resp.locked_by = row.locked_by
         resp.locked_by_name = row.locked_by_name
         resp.analyst_name = row.analyst_name
+        resp.unresolved_feedback_count = row.unresolved_feedback_count or 0
         out.append(resp)
     return out

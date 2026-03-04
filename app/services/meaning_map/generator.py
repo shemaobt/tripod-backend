@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -8,61 +7,120 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from qdrant_client import AsyncQdrantClient
 
 from app.core.config import Settings, get_settings
+from app.models.meaning_map import PMMLevel1, ProseMeaningMap
 from app.models.rag import RagNamespace
 from app.services.bhsa import loader as bhsa_loader
 from app.services.rag.query import query as rag_query
 
 logger = logging.getLogger(__name__)
 
-GENERATION_SYSTEM_PROMPT = """\
-You are a biblical text analyst specializing in the Tripod Method for Oral Bible Translation (OBT).
-Your task is to generate a Prose Meaning Map (PMM) for a given biblical passage.
+GENERATION_PROMPT_TEMPLATE = """\
+You are an expert biblical exegete and mapper for the "Tripod Method for AI-Assisted \
+Oral Bible Translation." Your task is to produce a complete, flawless Bible Meaning Map \
+for a given biblical passage.
+You will be provided with the target pericope and its highly granular linguistic data \
+from the BHSA (Biblia Hebraica Stuttgartensia Amstelodamensis) database. You must use \
+this linguistic data as your absolute ground truth for the text's contents, participants, \
+and event sequencing. Do not rely on standard English translations, as they introduce \
+structural bias.
+Produce the map in three distinct levels, adhering to the strict division of labor and \
+formatting rules outlined below.
 
-A PMM has three levels:
+INPUT DATA:
+Target Passage: {reference}
 
-**Level 1 — The Arc:** A single block of continuous prose (no bullets, no numbered lists)
-capturing the overall narrative arc of the passage. Minimum 80 words.
+{bhsa_section}
+{rag_section}
 
-**Level 2 — Scenes:** One scene per logical unit (verse range). Each scene has:
-- 2A People: Every person present (Name, Role, Relationship, Wants, Carries)
-- 2B Places: Every location (Name, Role, Type, Meaning, Effect on scene)
-- 2C Objects & Elements: Physical objects/durations/natural elements \
-(Name, What it is, Function in scene, Signals) plus Significant Absence
-- 2D What Happens: Prose narrative of scene events (minimum 15 words)
-- 2E Communicative Purpose: Why this scene exists (minimum 3 sentences, 10 words)
+STEP 1: Level 1 — The Arc
+Write one or two prose paragraphs giving the performer the "world" of the passage. \
+You must address:
+- The Arc/Shape: The emotional trajectory, pacing, and what the section accomplishes \
+in the larger story.
+- Theological Significance: How God acts (or conspicuously doesn't), and the \
+theological weight.
+- Temporal and Modal Register: You MUST explicitly state the register (e.g., \
+"completed past narrative, moving forward in sequence," "gnomic/timeless," \
+"imperative/procedural").
 
-**Level 3 — Propositions:** One per verse. Each is Q&A pairs.
-- First question MUST be "What happens?"
-- Additional questions decompose embedded content
-- Answers should be semantic inventory, NOT commentary or interpretation
+STEP 2: Level 2 — The Scenes
+Divide the passage into natural episodes (typically 3-6 verses). For each scene, provide:
+- Title: A one-sentence description.
+- 2A — People: Every person present. List: Name, Role, Relationship, Wants, and \
+Carries/Fears.
+- 2B — Places: Every location (including transitional spaces/roads). List: Name, Role, \
+Type, Meaning, and Effect on scene.
+- 2C — Objects and Elements: Every physical thing, animal, duration of time. List: Name, \
+What it is, Function, and What it signals. Explicitly note Significant Absences at the end.
+- 2D — What Happens: A full prose description of actions, specific about cause and \
+effect. Rule: Do not reproduce or paraphrase the biblical clauses sentence-by-sentence.
+- 2E — Communicative Purpose: A mandatory prose paragraph (min. 3 sentences) explaining \
+why the scene exists, what it establishes, and the emotional/theological weight the \
+performer must carry.
 
-You MUST output valid JSON matching this exact schema:
-{
-  "level_1": { "arc": "string" },
-  "level_2_scenes": [{
-    "scene_number": 1,
-    "verses": "1-3",
-    "title": "string",
-    "people": [{ "name": "", "role": "", "relationship": "", "wants": "", "carries": "" }],
-    "places": [{ "name": "", "role": "", "type": "", "meaning": "", "effect_on_scene": "" }],
-    "objects": [{ "name": "", "what_it_is": "", "function_in_scene": "", "signals": "" }],
-    "significant_absence": "",
-    "what_happens": "",
-    "communicative_purpose": ""
-  }],
-  "level_3_propositions": [{
-    "proposition_number": 1,
-    "verse": "1",
-    "content": [{ "question": "What happens?", "answer": "" }]
-  }]
-}
+STEP 3: Level 3 — The Propositions
+Create one semantic inventory block for every single verse. Use the BHSA clause and \
+phrase tags (Subj, Pred, Objc, Cmpl) to accurately map what occurs.
 
-IMPORTANT:
-- Output ONLY the JSON object, no markdown fences, no explanation before or after.
-- Every field must be populated.
-- Answers must NOT contain commentary words (significant, important, notably, etc.)
-- Answers must NOT contain performance frames (behold, and then, etc.)
+Strict Level 3 Rules:
+- Question & Answer Format: The first line is always "What happens?" followed by an \
+event label (e.g., a death, a departure, a speech act). Remaining lines use plain \
+natural questions ("Who?", "To where?", "With whom?") based on the event.
+- NO FINITE CLAUSES: The answer side of a line must NEVER contain a conjugated verb \
+with its own subject. If an answer would naturally be a clause (e.g., "because the \
+famine ended"), it is an embedded proposition. You must name the outer relation on one \
+line, and decompose the inner content into sub-lines.
+- Direct Naming: Never paraphrase proper names, place names, or specific concrete nouns \
+(e.g., Bethlehem is Bethlehem, not "a town in Judah").
+- No Commentary: Keep all emotional tone, theological notes, and performance frames \
+(e.g., "And then", "Listen!") out of Level 3.
+- Handling Speech Acts: Use two layers. The outer layer maps the speech act (e.g., \
+"What she does with the words? blesses; releases"). The inner layer maps the content \
+line-by-line, introduced by "What the words say — [ordinal/question]?". Never use \
+commentary wrappers (e.g., avoid "a reminder that..." or "a promise to...").
+- Manner & Attribute: If the BHSA data shows an explicit modifier/adjunct of manner, \
+add a "How?" line. If it predicates a specific quality, add a "His/her/its condition?" \
+line.
+
+Format Example for Level 3:
+  Proposition X — Verse Y
+  What happens? a man emigrates temporarily
+  Who? Elimelech
+  From where? Bethlehem in Judah
+  To where? the fields of Moab
+  With whom? his wife Naomi; his two sons Mahlon and Kilion
+
+Now, generate the complete Bible Meaning Map for {reference}.
 """
+
+
+def _format_bhsa_clauses(clauses: list[dict[str, Any]]) -> str:
+    """Format BHSA clause dicts into rich multi-line text for the LLM prompt."""
+    lines: list[str] = []
+    for c in clauses:
+        line = (
+            f"  Verse {c.get('verse', '?')} | [{c.get('clause_type', '')}] "
+            f"{c.get('text', '')} — {c.get('gloss', '')}"
+        )
+
+        if c.get("lemma"):
+            line += f" | verb: {c['lemma']} ({c.get('binyan', '?')}, {c.get('tense', '?')})"
+
+        mainline = c.get("is_mainline", False)
+        chain = c.get("chain_position", "?")
+        line += f" | mainline: {mainline} | chain: {chain}"
+
+        if c.get("subjects"):
+            line += f" | subj: {', '.join(c['subjects'])}"
+        if c.get("objects"):
+            line += f" | obj: {', '.join(c['objects'])}"
+        if c.get("names"):
+            line += f" | names: {', '.join(c['names'])}"
+        if c.get("has_ki"):
+            line += " | has_ki: true"
+
+        lines.append(line)
+    return "\n".join(lines)
 
 
 def _build_generation_prompt(
@@ -70,47 +128,28 @@ def _build_generation_prompt(
     bhsa_data: dict[str, Any] | None,
     rag_context: str | None,
 ) -> str:
-    parts = [GENERATION_SYSTEM_PROMPT]
-
-    parts.append(f"\n## Passage: {reference}\n")
-
+    bhsa_section = ""
     if bhsa_data and bhsa_data.get("clauses"):
-        parts.append("## Hebrew Linguistic Data (BHSA)\n")
-        for clause in bhsa_data["clauses"]:
-            clause_text = clause.get("text_plain", "")
-            clause_type = clause.get("clause_type", "")
-            gloss = clause.get("gloss", "")
-            parts.append(f"- [{clause_type}] {clause_text} — {gloss}")
-        parts.append("")
+        formatted = _format_bhsa_clauses(bhsa_data["clauses"])
+        bhsa_section = f"BHSA Linguistic Data:\n{formatted}"
 
+    rag_section = ""
     if rag_context:
-        parts.append("## Methodology Reference\n")
-        parts.append(rag_context)
-        parts.append("")
+        rag_section = f"Methodology Reference:\n{rag_context}"
 
-    parts.append("Now generate the complete Prose Meaning Map as a single JSON object.\n")
-
-    return "\n".join(parts)
-
-
-def _parse_llm_output(raw: str) -> dict[str, Any]:
-    text = raw.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:])
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-
-    return json.loads(text)
+    return GENERATION_PROMPT_TEMPLATE.format(
+        reference=reference,
+        bhsa_section=bhsa_section,
+        rag_section=rag_section,
+    )
 
 
 def _empty_map() -> dict[str, Any]:
-    return {
-        "level_1": {"arc": ""},
-        "level_2_scenes": [],
-        "level_3_propositions": [],
-    }
+    return ProseMeaningMap(
+        level_1=PMMLevel1(arc=""),
+        level_2_scenes=[],
+        level_3_propositions=[],
+    ).model_dump()
 
 
 async def generate_meaning_map(
@@ -134,7 +173,7 @@ async def generate_meaning_map(
             rag_result = await rag_query(
                 qdrant_client,
                 RagNamespace.MEANING_MAP_DOCS,
-                f"How to create a Prose Meaning Map for {reference}",
+                f"How to create a Bible Meaning Map for {reference}",
                 settings=settings,
             )
             if rag_result.answer:
@@ -149,14 +188,9 @@ async def generate_meaning_map(
             model=settings.google_llm_model,
             google_api_key=settings.google_api_key,
         )
-        response = await llm.ainvoke(prompt)
-        content = response.content
-        if isinstance(content, list):
-            content = "".join(
-                block.get("text", "") if isinstance(block, dict) else str(block)
-                for block in content
-            )
-        return _parse_llm_output(content)
+        structured_llm = llm.with_structured_output(ProseMeaningMap)
+        result = await structured_llm.ainvoke(prompt)
+        return result.model_dump()
     except Exception as e:
         logger.error("LLM generation failed for %s: %s", reference, e)
         return _empty_map()

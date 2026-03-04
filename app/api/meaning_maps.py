@@ -19,11 +19,28 @@ from app.models.meaning_map import (
     MeaningMapStatusUpdate,
     MeaningMapUpdateData,
 )
-from app.services import meaning_map_service
+from app.services import meaning_map_service, notification_service
 from app.services.meaning_map.generator import generate_meaning_map as run_generation
+from app.services.notifications.get_mm_app_id import get_mm_app_id
+
+from app.db.models.meaning_map import MeaningMap as MeaningMapModel
 
 router = APIRouter()
 _mm_access = require_app_access("meaning-map-generator")
+
+
+async def _enrich_response(
+    db: AsyncSession, mm: MeaningMapModel
+) -> MeaningMapResponse:
+    """Build MeaningMapResponse with book/pericope context."""
+    pericope, book = await meaning_map_service.get_pericope_with_book(
+        db, mm.pericope_id
+    )
+    resp = MeaningMapResponse.model_validate(mm)
+    resp.book_id = book.id
+    resp.book_name = book.name
+    resp.pericope_reference = pericope.reference
+    return resp
 
 
 @router.get("", response_model=list[MeaningMapListResponse], dependencies=[_mm_access])
@@ -47,7 +64,7 @@ async def get_meaning_map(
     db: AsyncSession = Depends(get_db),
 ) -> MeaningMapResponse:
     mm = await meaning_map_service.get_meaning_map_or_404(db, map_id)
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.put("/{map_id}", response_model=MeaningMapResponse, dependencies=[_mm_access])
@@ -60,7 +77,7 @@ async def update_meaning_map(
     mm, book = await meaning_map_service.get_map_with_book(db, map_id)
     meaning_map_service.ensure_ot(book)
     mm = await meaning_map_service.update_meaning_map_data(db, mm, payload.data, user.id)
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.patch("/{map_id}/status", response_model=MeaningMapResponse, dependencies=[_mm_access])
@@ -72,7 +89,7 @@ async def update_status(
 ) -> MeaningMapResponse:
     mm = await meaning_map_service.get_meaning_map_or_404(db, map_id)
     mm = await meaning_map_service.transition_status(db, mm, payload.status, user.id)
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.post("/{map_id}/lock", response_model=MeaningMapResponse, dependencies=[_mm_access])
@@ -83,7 +100,7 @@ async def lock_map(
 ) -> MeaningMapResponse:
     mm = await meaning_map_service.get_meaning_map_or_404(db, map_id)
     mm = await meaning_map_service.lock_map(db, mm, user.id)
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.post("/{map_id}/unlock", response_model=MeaningMapResponse, dependencies=[_mm_access])
@@ -94,7 +111,7 @@ async def unlock_map(
 ) -> MeaningMapResponse:
     mm = await meaning_map_service.get_meaning_map_or_404(db, map_id)
     mm = await meaning_map_service.unlock_map(db, mm, user.id, is_admin=user.is_platform_admin)
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.delete("/{map_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_mm_access])
@@ -136,7 +153,7 @@ async def generate_meaning_map(
         analyst_id=user.id,
         data=generated_data,
     )
-    return MeaningMapResponse.model_validate(mm)
+    return await _enrich_response(db, mm)
 
 
 @router.get("/{map_id}/export/json", dependencies=[_mm_access])
@@ -186,7 +203,7 @@ async def add_feedback(
         db, map_id, payload.section_key, user.id, payload.content
     )
     resp = FeedbackResponse.model_validate(fb)
-    resp.author_name = user.full_name
+    resp.author_name = user.display_name
     return resp
 
 
@@ -213,4 +230,21 @@ async def resolve_feedback(
     db: AsyncSession = Depends(get_db),
 ) -> FeedbackResponse:
     fb = await meaning_map_service.resolve_feedback(db, map_id, feedback_id)
+
+    if fb.author_id != user.id:
+        mm = await meaning_map_service.get_meaning_map_or_404(db, map_id)
+        pericope, _ = await meaning_map_service.get_pericope_with_book(db, mm.pericope_id)
+        app_id = await get_mm_app_id(db)
+        await notification_service.create_notification(
+            db,
+            user_id=fb.author_id,
+            app_id=app_id,
+            event_type="feedback_resolved",
+            title="Your feedback was resolved",
+            body=f"Your feedback on the meaning map for {pericope.reference} was resolved.",
+            actor_id=user.id,
+            related_map_id=map_id,
+            pericope_reference=pericope.reference,
+        )
+
     return FeedbackResponse.model_validate(fb)

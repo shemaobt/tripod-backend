@@ -1,43 +1,21 @@
-import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.models.meaning_map import PMMLevel1, ProseMeaningMap
 from app.services.meaning_map.generator import (
     _build_generation_prompt,
     _empty_map,
-    _parse_llm_output,
     generate_meaning_map,
 )
 
-VALID_MAP = {
-    "level_1": {"arc": "Test arc"},
-    "level_2_scenes": [],
-    "level_3_propositions": [],
-}
-
-
-# ---------------------------------------------------------------------------
-# _parse_llm_output
-# ---------------------------------------------------------------------------
-
-
-def test_parse_llm_output_valid_json() -> None:
-    raw = json.dumps(VALID_MAP)
-    result = _parse_llm_output(raw)
-    assert result == VALID_MAP
-
-
-def test_parse_llm_output_markdown_fenced() -> None:
-    raw = f"```json\n{json.dumps(VALID_MAP)}\n```"
-    result = _parse_llm_output(raw)
-    assert result == VALID_MAP
-
-
-def test_parse_llm_output_invalid_json() -> None:
-    with pytest.raises(json.JSONDecodeError):
-        _parse_llm_output("not json at all")
+VALID_MAP_MODEL = ProseMeaningMap(
+    level_1=PMMLevel1(arc="Test arc"),
+    level_2_scenes=[],
+    level_3_propositions=[],
+)
+VALID_MAP = VALID_MAP_MODEL.model_dump()
 
 
 # ---------------------------------------------------------------------------
@@ -65,12 +43,31 @@ def test_build_prompt_includes_reference() -> None:
 
 def test_build_prompt_includes_bhsa_data() -> None:
     bhsa_data = {
-        "clauses": [{"text_plain": "bereshit", "clause_type": "NC", "gloss": "in the beginning"}]
+        "clauses": [
+            {
+                "verse": 1,
+                "text": "bereshit",
+                "clause_type": "NC",
+                "gloss": "in the beginning",
+                "is_mainline": True,
+                "chain_position": 1,
+                "subjects": ["God"],
+                "objects": [],
+                "names": [],
+                "lemma": "BRJ",
+                "binyan": "qal",
+                "tense": "perf",
+                "has_ki": False,
+            }
+        ]
     }
     prompt = _build_generation_prompt("Genesis 1:1", bhsa_data, None)
-    assert "Hebrew Linguistic Data" in prompt
+    assert "BHSA Linguistic Data" in prompt
     assert "bereshit" in prompt
     assert "in the beginning" in prompt
+    assert "mainline: True" in prompt
+    assert "verb: BRJ (qal, perf)" in prompt
+    assert "subj: God" in prompt
 
 
 def test_build_prompt_includes_rag_context() -> None:
@@ -81,7 +78,7 @@ def test_build_prompt_includes_rag_context() -> None:
 
 def test_build_prompt_excludes_bhsa_when_none() -> None:
     prompt = _build_generation_prompt("Genesis 1:1", None, None)
-    assert "Hebrew Linguistic Data" not in prompt
+    assert "BHSA Linguistic Data" not in prompt
 
 
 def test_build_prompt_excludes_rag_when_none() -> None:
@@ -113,15 +110,15 @@ def mock_settings():
 async def test_generate_meaning_map_success(mock_llm_cls, mock_bhsa, mock_settings) -> None:
     mock_bhsa.get_status.return_value = {"is_loaded": False}
 
-    response = MagicMock()
-    response.content = json.dumps(VALID_MAP)
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(return_value=response)
+    mock_structured = AsyncMock()
+    mock_structured.ainvoke = AsyncMock(return_value=VALID_MAP_MODEL)
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output = MagicMock(return_value=mock_structured)
     mock_llm_cls.return_value = mock_llm
 
     result = await generate_meaning_map("Genesis 1:1-5", settings=mock_settings)
     assert result == VALID_MAP
-    mock_llm.ainvoke.assert_called_once()
+    mock_structured.ainvoke.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -132,8 +129,10 @@ async def test_generate_meaning_map_fallback_on_failure(
 ) -> None:
     mock_bhsa.get_status.return_value = {"is_loaded": False}
 
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(side_effect=RuntimeError("LLM unavailable"))
+    mock_structured = AsyncMock()
+    mock_structured.ainvoke = AsyncMock(side_effect=RuntimeError("LLM unavailable"))
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output = MagicMock(return_value=mock_structured)
     mock_llm_cls.return_value = mock_llm
 
     result = await generate_meaning_map("Genesis 1:1-5", settings=mock_settings)
@@ -153,10 +152,10 @@ async def test_generate_meaning_map_with_rag(
     rag_result.answer = "Use the Tripod Method for OBT."
     mock_rag_query.return_value = rag_result
 
-    response = MagicMock()
-    response.content = json.dumps(VALID_MAP)
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(return_value=response)
+    mock_structured = AsyncMock()
+    mock_structured.ainvoke = AsyncMock(return_value=VALID_MAP_MODEL)
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output = MagicMock(return_value=mock_structured)
     mock_llm_cls.return_value = mock_llm
 
     qdrant = AsyncMock()

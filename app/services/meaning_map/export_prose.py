@@ -5,7 +5,7 @@ def export_prose(mm: MeaningMap) -> str:
     data = mm.data
     lines: list[str] = []
 
-    lines.append("# Prose Meaning Map\n")
+    lines.append("# Bible Meaning Map\n")
     lines.append("**Method:** Tripod Method\n")
     lines.append("---\n")
 

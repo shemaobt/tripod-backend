@@ -52,7 +52,7 @@ async def test_export_prose_contains_arc(db_session) -> None:
     mm = await make_meaning_map(db_session, pericope.id, user.id, data=SAMPLE_MM_DATA)
     result = export_prose(mm)
     assert "God creates the heavens and the earth." in result
-    assert "# Prose Meaning Map" in result
+    assert "# Bible Meaning Map" in result
     assert "Level 1 — The Arc" in result
 
 
@@ -90,7 +90,7 @@ async def test_export_prose_empty_data(db_session) -> None:
     pericope = await make_pericope(db_session, book.id)
     mm = await make_meaning_map(db_session, pericope.id, user.id, data={})
     result = export_prose(mm)
-    assert "# Prose Meaning Map" in result
+    assert "# Bible Meaning Map" in result
 
 
 # ---------------------------------------------------------------------------
