@@ -10,7 +10,9 @@ from app.services.book_context.generation.nodes.collect_bhsa import collect_bhsa
 from app.services.book_context.generation.nodes.context_sections import generate_context_sections
 from app.services.book_context.generation.nodes.discourse import generate_discourse_threads
 from app.services.book_context.generation.nodes.participants import generate_participants
-from app.services.book_context.generation.nodes.structural_outline import generate_structural_outline
+from app.services.book_context.generation.nodes.structural_outline import (
+    generate_structural_outline,
+)
 from app.services.book_context.generation.state import BCDGenerationState
 from app.services.book_context.get_bcd import get_bcd_or_404
 from app.services.book_context.track_step import track_step

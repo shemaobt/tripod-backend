@@ -19,7 +19,9 @@ async def create_bcd(
     result = await db.execute(select(BibleBook).where(BibleBook.id == book_id))
     book = result.scalar_one_or_none()
     if not book or book.testament.value != "OT":
-        raise AuthorizationError("Book Context Documents can only be created for Old Testament books.")
+        raise AuthorizationError(
+            "Book Context Documents can only be created for Old Testament books."
+        )
 
     max_version = 0
     existing = await db.execute(

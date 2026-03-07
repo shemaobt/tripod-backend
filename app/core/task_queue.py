@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -41,7 +42,5 @@ async def init_task_queue() -> None:
 
 async def close_task_queue() -> None:
     if _app is not None:
-        try:
+        with contextlib.suppress(Exception):
             await _app.close_async()
-        except Exception:
-            pass

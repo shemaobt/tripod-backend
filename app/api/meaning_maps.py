@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,12 +22,8 @@ from app.models.meaning_map import (
     MeaningMapStatusUpdate,
     MeaningMapUpdateData,
 )
-import logging
-
 from app.services import meaning_map_service, notification_service
 from app.services.book_context.compute_entry_brief import compute_entry_brief
-
-logger = logging.getLogger(__name__)
 from app.services.meaning_map.generator import (
     GenerationError,
 )
@@ -33,6 +31,8 @@ from app.services.meaning_map.generator import (
     generate_meaning_map as run_generation,
 )
 from app.services.notifications.get_mm_app_id import get_mm_app_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 _mm_access = require_app_access("meaning-map-generator")

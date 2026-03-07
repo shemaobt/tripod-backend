@@ -21,23 +21,23 @@ from app.services import authorization_service
 from app.services.book_context.add_feedback import add_feedback
 from app.services.book_context.approve_bcd import approve_bcd
 from app.services.book_context.cancel_generation import cancel_generation
+from app.services.book_context.check_stale import check_bcd_staleness
 from app.services.book_context.compute_entry_brief import compute_entry_brief
 from app.services.book_context.create_bcd import create_bcd
 from app.services.book_context.create_new_version import create_new_version
 from app.services.book_context.generation.run import run_bcd_generation
+from app.services.book_context.get_approval_status import get_approval_status
 from app.services.book_context.get_bcd import get_bcd_or_404
-from app.services.book_context.start_generation import (
-    GenerationAlreadyInProgress,
-    start_generation,
-)
 from app.services.book_context.list_bcds import list_bcds
 from app.services.book_context.list_feedback import list_feedback
 from app.services.book_context.list_generation_logs import list_generation_logs
 from app.services.book_context.request_revision import request_revision
-from app.services.book_context.check_stale import check_bcd_staleness
-from app.services.book_context.get_approval_status import get_approval_status
 from app.services.book_context.resolve_feedback import resolve_feedback
 from app.services.book_context.set_active import set_active_bcd
+from app.services.book_context.start_generation import (
+    GenerationAlreadyInProgress,
+    start_generation,
+)
 from app.services.book_context.update_section import update_section
 from app.services.book_context.validate_against_brief import validate_map_against_brief
 
@@ -165,7 +165,11 @@ async def get_bcd_approval_status(
     return BCDApprovalStatusResponse(**status)
 
 
-@router.patch("/{bcd_id}/sections/{section_key}", response_model=BCDResponse, dependencies=[_mm_access])
+@router.patch(
+    "/{bcd_id}/sections/{section_key}",
+    response_model=BCDResponse,
+    dependencies=[_mm_access],
+)
 async def update_bcd_section(
     bcd_id: str,
     section_key: str,
@@ -196,7 +200,10 @@ async def set_active_version(
 ) -> BCDResponse:
     role = await _resolve_user_role(db, user)
     if role not in ("admin", "facilitator"):
-        raise HTTPException(status_code=403, detail="Only admins and facilitators can set the active version.")
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and facilitators can set the active version.",
+        )
     bcd = await set_active_bcd(db, bcd_id)
     return BCDResponse.model_validate(bcd)
 
@@ -209,7 +216,10 @@ async def cancel_bcd_generation(
 ) -> dict:
     role = await _resolve_user_role(db, user)
     if role not in ("admin", "facilitator"):
-        raise HTTPException(status_code=403, detail="Only admins and facilitators can cancel generation.")
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and facilitators can cancel generation.",
+        )
     book_id = await cancel_generation(db, bcd_id)
     return {"deleted": True, "book_id": book_id}
 
@@ -313,8 +323,10 @@ async def generate_bcd(
     feedback = payload.feedback if payload else None
     try:
         target = await start_generation(db, bcd_id, user.id, user_feedback=feedback)
-    except GenerationAlreadyInProgress:
-        raise HTTPException(status_code=409, detail="Generation is already in progress.")
+    except GenerationAlreadyInProgress as err:
+        raise HTTPException(
+            status_code=409, detail="Generation is already in progress."
+        ) from err
 
     new_bcd_id = target.target_bcd.id
     user_feedback = target.user_feedback

@@ -22,7 +22,7 @@ async def set_active_bcd(
         .where(
             BookContextDocument.book_id == bcd.book_id,
             BookContextDocument.id != bcd_id,
-            BookContextDocument.is_active == True,
+            BookContextDocument.is_active,
         )
         .values(is_active=False)
     )

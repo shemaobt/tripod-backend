@@ -17,12 +17,18 @@ def collect_bhsa(state: BCDGenerationState) -> dict:
 
     summary = build_bhsa_summary(tf_api, book_name, chapter_count)
     if not summary.strip():
-        raise RuntimeError(f"BHSA returned empty summary for {book_name}. Check book name and chapter count.")
+        raise RuntimeError(
+            f"BHSA returned empty summary for {book_name}. "
+            "Check book name and chapter count."
+        )
 
     entities = extract_bhsa_entities(tf_api, book_name, chapter_count)
     bhsa_entities = entities["bhsa_entities"]
 
     if not bhsa_entities:
-        raise RuntimeError(f"BHSA found no named entities for {book_name}. Cannot build participant register.")
+        raise RuntimeError(
+            f"BHSA found no named entities for {book_name}. "
+            "Cannot build participant register."
+        )
 
     return {"bhsa_summary": summary, "bhsa_entities": bhsa_entities}

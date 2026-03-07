@@ -72,7 +72,7 @@ async def approve_bcd(
             select(BookContextDocument.id)
             .where(
                 BookContextDocument.book_id == bcd.book_id,
-                BookContextDocument.is_active == True,
+                BookContextDocument.is_active,
             )
             .limit(1)
         )

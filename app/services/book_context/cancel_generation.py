@@ -4,7 +4,7 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError
-from app.db.models.book_context import BCDGenerationLog, BCDStatus, BookContextDocument
+from app.db.models.book_context import BCDGenerationLog, BCDStatus
 from app.services.book_context.get_bcd import get_bcd_or_404
 
 

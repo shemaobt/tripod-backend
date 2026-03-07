@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.access_requests import router as access_requests_router
 from app.api.auth import router as auth_router
-from app.api.book_context import router as book_context_router
 from app.api.bhsa import router as bhsa_router
+from app.api.book_context import router as book_context_router
 from app.api.books import router as books_router
 from app.api.health import router as health_router
 from app.api.languages import router as languages_router

@@ -28,7 +28,10 @@ async def update_section(
     bcd = await get_bcd_or_404(db, bcd_id)
 
     if bcd.status == BCDStatus.APPROVED:
-        raise ConflictError("Cannot edit an approved Book Context Document. Create a new version instead.")
+        raise ConflictError(
+            "Cannot edit an approved Book Context Document. "
+            "Create a new version instead."
+        )
 
     if bcd.status == BCDStatus.GENERATING:
         raise ConflictError("Cannot edit a document that is currently being generated.")
