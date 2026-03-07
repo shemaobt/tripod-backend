@@ -85,3 +85,80 @@ async def test_is_member_false(db_session) -> None:
     org = await make_organization(db_session, slug="org4")
     result = await organization_service.is_member(db_session, user.id, org.id)
     assert result is False
+
+
+@pytest.mark.asyncio
+async def test_update_organization_name(db_session) -> None:
+    org = await make_organization(db_session, name="Old Name", slug="upd-name")
+    updated = await organization_service.update_organization(
+        db_session, org.id, name="New Name"
+    )
+    assert updated.name == "New Name"
+    assert updated.slug == "upd-name"
+
+
+@pytest.mark.asyncio
+async def test_update_organization_slug(db_session) -> None:
+    org = await make_organization(db_session, name="Org", slug="old-slug")
+    updated = await organization_service.update_organization(
+        db_session, org.id, slug="new-slug"
+    )
+    assert updated.slug == "new-slug"
+    assert updated.name == "Org"
+
+
+@pytest.mark.asyncio
+async def test_update_organization_raises_not_found(db_session) -> None:
+    with pytest.raises(NotFoundError, match="Organization not found"):
+        await organization_service.update_organization(
+            db_session, "00000000-0000-0000-0000-000000000000", name="X"
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_organization_raises_conflict_for_duplicate_slug(db_session) -> None:
+    await make_organization(db_session, slug="taken-slug")
+    org = await make_organization(db_session, slug="my-slug")
+    with pytest.raises(ConflictError, match="slug already exists"):
+        await organization_service.update_organization(
+            db_session, org.id, slug="taken-slug"
+        )
+
+
+@pytest.mark.asyncio
+async def test_list_members_returns_members_with_user_info(db_session) -> None:
+    org = await make_organization(db_session, slug="org-members")
+    user1 = await make_user(db_session, email="m1@example.com", display_name="User One")
+    user2 = await make_user(db_session, email="m2@example.com", display_name="User Two")
+    await make_organization_member(db_session, user1.id, org.id, role="admin")
+    await make_organization_member(db_session, user2.id, org.id, role="member")
+    members = await organization_service.list_members(db_session, org.id)
+    assert len(members) == 2
+    member_obj, user_obj = members[0]
+    assert user_obj.email in ("m1@example.com", "m2@example.com")
+    assert member_obj.organization_id == org.id
+
+
+@pytest.mark.asyncio
+async def test_list_members_returns_empty_for_no_members(db_session) -> None:
+    org = await make_organization(db_session, slug="org-empty")
+    members = await organization_service.list_members(db_session, org.id)
+    assert members == []
+
+
+@pytest.mark.asyncio
+async def test_remove_member_success(db_session) -> None:
+    org = await make_organization(db_session, slug="org-rm")
+    user = await make_user(db_session, email="rm@example.com")
+    await make_organization_member(db_session, user.id, org.id)
+    await organization_service.remove_member(db_session, org.id, user.id)
+    members = await organization_service.list_members(db_session, org.id)
+    assert len(members) == 0
+
+
+@pytest.mark.asyncio
+async def test_remove_member_raises_not_found(db_session) -> None:
+    org = await make_organization(db_session, slug="org-rm2")
+    user = await make_user(db_session, email="notrm@example.com")
+    with pytest.raises(NotFoundError, match="Member not found"):
+        await organization_service.remove_member(db_session, org.id, user.id)
