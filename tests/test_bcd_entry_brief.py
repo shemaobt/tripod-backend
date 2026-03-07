@@ -4,7 +4,6 @@ from app.core.exceptions import NotFoundError
 from app.services.book_context.compute_entry_brief import compute_entry_brief
 from tests.baker import make_bcd, make_bible_book, make_pericope, make_user
 
-
 SAMPLE_PARTICIPANTS = [
     {
         "name": "Naomi",
@@ -74,7 +73,10 @@ SAMPLE_INSTITUTIONS = [
 @pytest.mark.asyncio
 async def test_first_pericope_returns_opening_brief(db_session):
     user = await make_user(db_session, email="eb1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(
         db_session, book.id, user.id,
         status="approved", version=1,
@@ -98,7 +100,10 @@ async def test_first_pericope_returns_opening_brief(db_session):
 @pytest.mark.asyncio
 async def test_non_first_pericope_slices_by_entry_verse(db_session):
     user = await make_user(db_session, email="eb2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(
         db_session, book.id, user.id,
         status="approved", version=2,
@@ -130,7 +135,10 @@ async def test_non_first_pericope_slices_by_entry_verse(db_session):
 @pytest.mark.asyncio
 async def test_entry_brief_filters_threads_by_opened_at(db_session):
     user = await make_user(db_session, email="eb3@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(
         db_session, book.id, user.id,
         status="approved", version=1,
@@ -157,7 +165,10 @@ async def test_entry_brief_filters_threads_by_opened_at(db_session):
 @pytest.mark.asyncio
 async def test_entry_brief_resolved_thread_excluded_from_established(db_session):
     user = await make_user(db_session, email="eb4@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(
         db_session, book.id, user.id,
         status="approved", version=1,
@@ -183,7 +194,10 @@ async def test_entry_brief_resolved_thread_excluded_from_established(db_session)
 @pytest.mark.asyncio
 async def test_entry_brief_institutions_filtered(db_session):
     user = await make_user(db_session, email="eb5@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(
         db_session, book.id, user.id,
         status="approved", version=1,
@@ -208,7 +222,10 @@ async def test_entry_brief_institutions_filtered(db_session):
 @pytest.mark.asyncio
 async def test_entry_brief_no_approved_bcd_raises(db_session):
     user = await make_user(db_session, email="eb6@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="draft", version=1)
     pericope = await make_pericope(
         db_session, book.id,

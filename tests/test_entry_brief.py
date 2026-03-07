@@ -52,7 +52,10 @@ SAMPLE_BCD_DATA = {
             "question": "Will Ruth find security and belonging?",
             "status_by_episode": [
                 {"at": {"chapter": 1, "verse": 22}, "status": "opened, Ruth has no provision"},
-                {"at": {"chapter": 2, "verse": 23}, "status": "partially answered, Boaz shows favor"},
+                {
+                    "at": {"chapter": 2, "verse": 23},
+                    "status": "partially answered, Boaz shows favor",
+                },
             ],
         },
         {
@@ -110,7 +113,10 @@ SAMPLE_BCD_DATA = {
 @pytest.mark.asyncio
 async def test_first_pericope_returns_nothing_established(db_session):
     user = await make_user(db_session, email="brief1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     pericope = await make_pericope(
         db_session, book.id,
@@ -128,7 +134,10 @@ async def test_first_pericope_returns_nothing_established(db_session):
 @pytest.mark.asyncio
 async def test_slices_participants_before_target_verse(db_session):
     user = await make_user(db_session, email="brief2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -152,7 +161,10 @@ async def test_slices_participants_before_target_verse(db_session):
 @pytest.mark.asyncio
 async def test_slices_participant_arcs_at_target_verse(db_session):
     user = await make_user(db_session, email="brief3@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -177,7 +189,10 @@ async def test_slices_participant_arcs_at_target_verse(db_session):
 @pytest.mark.asyncio
 async def test_includes_active_threads(db_session):
     user = await make_user(db_session, email="brief4@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -199,7 +214,10 @@ async def test_includes_active_threads(db_session):
 @pytest.mark.asyncio
 async def test_marks_resolved_threads(db_session):
     user = await make_user(db_session, email="brief5@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -221,7 +239,10 @@ async def test_marks_resolved_threads(db_session):
 @pytest.mark.asyncio
 async def test_filters_places_before_target(db_session):
     user = await make_user(db_session, email="brief6@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -244,7 +265,10 @@ async def test_filters_places_before_target(db_session):
 @pytest.mark.asyncio
 async def test_filters_institutions_before_target(db_session):
     user = await make_user(db_session, email="brief7@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
     await make_pericope(
         db_session, book.id,
@@ -266,8 +290,11 @@ async def test_filters_institutions_before_target(db_session):
 
 @pytest.mark.asyncio
 async def test_returns_error_when_no_approved_bcd(db_session):
-    user = await make_user(db_session, email="brief8@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    await make_user(db_session, email="brief8@test.com")
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     pericope = await make_pericope(
         db_session, book.id,
         chapter_start=1, verse_start=1, chapter_end=1, verse_end=5,
@@ -281,9 +308,12 @@ async def test_returns_error_when_no_approved_bcd(db_session):
 @pytest.mark.asyncio
 async def test_same_chapter_different_verses(db_session):
     user = await make_user(db_session, email="brief9@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
-    pericope1 = await make_pericope(
+    await make_pericope(
         db_session, book.id,
         chapter_start=1, verse_start=1, chapter_end=1, verse_end=2,
         reference="Ruth 1:1-2",

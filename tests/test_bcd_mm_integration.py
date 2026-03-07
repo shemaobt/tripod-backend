@@ -7,7 +7,10 @@ from tests.baker import make_bcd, make_bible_book, make_meaning_map, make_perico
 @pytest.mark.asyncio
 async def test_check_stale_returns_false_when_current(db_session):
     user = await make_user(db_session, email="int1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", version=2)
     pericope = await make_pericope(db_session, book.id, reference="Ruth 1:1-5")
     mm = await make_meaning_map(db_session, pericope.id, user.id)
@@ -22,7 +25,10 @@ async def test_check_stale_returns_false_when_current(db_session):
 @pytest.mark.asyncio
 async def test_check_stale_returns_true_when_bcd_updated(db_session):
     user = await make_user(db_session, email="int2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", version=1)
     await make_bcd(db_session, book.id, user.id, status="approved", version=2)
     pericope = await make_pericope(db_session, book.id, reference="Ruth 1:1-5")
@@ -39,7 +45,10 @@ async def test_check_stale_returns_true_when_bcd_updated(db_session):
 @pytest.mark.asyncio
 async def test_check_stale_returns_false_when_no_bcd(db_session):
     user = await make_user(db_session, email="int3@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     pericope = await make_pericope(db_session, book.id, reference="Ruth 1:1-5")
     mm = await make_meaning_map(db_session, pericope.id, user.id)
 

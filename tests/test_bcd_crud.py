@@ -1,9 +1,8 @@
 import pytest
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from app.core.exceptions import AuthorizationError, ConflictError
 from app.services.book_context.create_bcd import create_bcd
 from app.services.book_context.create_new_version import create_new_version
-from app.services.book_context.get_bcd import get_bcd_or_404
 from app.services.book_context.get_latest_approved import get_latest_approved
 from app.services.book_context.update_section import update_section
 from tests.baker import make_bcd, make_bible_book, make_user
@@ -27,7 +26,10 @@ SAMPLE_PARTICIPANTS = [
 @pytest.mark.asyncio
 async def test_create_bcd_success(db_session):
     user = await make_user(db_session, email="creator@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
 
     bcd = await create_bcd(db_session, book.id, user.id, "narrative")
 
@@ -51,7 +53,10 @@ async def test_create_bcd_rejects_nt_book(db_session):
 @pytest.mark.asyncio
 async def test_get_latest_approved_returns_highest_version(db_session):
     user = await make_user(db_session, email="creator3@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", version=1)
     await make_bcd(db_session, book.id, user.id, status="approved", version=2)
 
@@ -64,7 +69,10 @@ async def test_get_latest_approved_returns_highest_version(db_session):
 @pytest.mark.asyncio
 async def test_get_latest_approved_skips_drafts(db_session):
     user = await make_user(db_session, email="creator4@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", version=1)
     await make_bcd(db_session, book.id, user.id, status="draft", version=2)
 
@@ -77,7 +85,10 @@ async def test_get_latest_approved_skips_drafts(db_session):
 @pytest.mark.asyncio
 async def test_get_latest_approved_returns_none_when_no_approved(db_session):
     user = await make_user(db_session, email="creator5@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="draft", version=1)
 
     result = await get_latest_approved(db_session, book.id)
@@ -88,7 +99,10 @@ async def test_get_latest_approved_returns_none_when_no_approved(db_session):
 @pytest.mark.asyncio
 async def test_update_section_in_draft(db_session):
     user = await make_user(db_session, email="creator6@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     result = await update_section(db_session, bcd.id, "participant_register", SAMPLE_PARTICIPANTS)
@@ -99,7 +113,10 @@ async def test_update_section_in_draft(db_session):
 @pytest.mark.asyncio
 async def test_update_section_rejects_if_approved(db_session):
     user = await make_user(db_session, email="creator7@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id, status="approved")
 
     with pytest.raises(ConflictError, match="Cannot edit an approved"):
@@ -109,7 +126,10 @@ async def test_update_section_rejects_if_approved(db_session):
 @pytest.mark.asyncio
 async def test_create_new_version_from_approved(db_session):
     user = await make_user(db_session, email="creator8@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(
         db_session, book.id, user.id, status="approved", version=1,
         participant_register=SAMPLE_PARTICIPANTS,

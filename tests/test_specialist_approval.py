@@ -2,11 +2,10 @@
 
 import pytest
 
-from app.core.exceptions import AuthorizationError, ConflictError
+from app.core.exceptions import AuthorizationError
 from app.services.book_context.approve_bcd import approve_bcd
 from app.services.book_context.get_approval_status import get_approval_status
 from tests.baker import make_bcd, make_bible_book, make_user
-
 
 # ─── Specialist roles can approve ────────────────────────────────────────────
 
@@ -14,7 +13,10 @@ from tests.baker import make_bcd, make_bible_book, make_user
 @pytest.mark.asyncio
 async def test_exegete_can_approve(db_session):
     user = await make_user(db_session, email="exg1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     result = await approve_bcd(db_session, bcd.id, user.id, ["exegete"])
@@ -24,7 +26,10 @@ async def test_exegete_can_approve(db_session):
 @pytest.mark.asyncio
 async def test_biblical_language_specialist_can_approve(db_session):
     user = await make_user(db_session, email="bls1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     result = await approve_bcd(db_session, bcd.id, user.id, ["biblical_language_specialist"])
@@ -34,7 +39,10 @@ async def test_biblical_language_specialist_can_approve(db_session):
 @pytest.mark.asyncio
 async def test_translation_specialist_can_approve(db_session):
     user = await make_user(db_session, email="trs1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     result = await approve_bcd(db_session, bcd.id, user.id, ["translation_specialist"])
@@ -48,7 +56,10 @@ async def test_translation_specialist_can_approve(db_session):
 async def test_two_specialists_covering_two_specialties_approve(db_session):
     user1 = await make_user(db_session, email="spec1@test.com")
     user2 = await make_user(db_session, email="spec2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user1.id)
 
     await approve_bcd(db_session, bcd.id, user1.id, ["exegete"])
@@ -61,7 +72,10 @@ async def test_two_specialists_covering_two_specialties_approve(db_session):
 async def test_two_specialists_same_specialty_stay_review(db_session):
     user1 = await make_user(db_session, email="dupe_spec1@test.com")
     user2 = await make_user(db_session, email="dupe_spec2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user1.id)
 
     await approve_bcd(db_session, bcd.id, user1.id, ["exegete"])
@@ -77,7 +91,10 @@ async def test_two_specialists_same_specialty_stay_review(db_session):
 async def test_facilitator_plus_specialist_covering_two_specialties(db_session):
     fac = await make_user(db_session, email="fac_spec1@test.com")
     spec = await make_user(db_session, email="fac_spec2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, fac.id)
 
     await approve_bcd(db_session, bcd.id, fac.id, ["facilitator", "exegete"])
@@ -90,7 +107,10 @@ async def test_facilitator_plus_specialist_covering_two_specialties(db_session):
 async def test_user_with_multiple_specialist_roles(db_session):
     user1 = await make_user(db_session, email="multi1@test.com")
     user2 = await make_user(db_session, email="multi2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user1.id)
 
     # User1 covers 2 specialties but is only 1 person
@@ -104,7 +124,10 @@ async def test_user_with_multiple_specialist_roles(db_session):
 @pytest.mark.asyncio
 async def test_single_user_with_two_specialties_stays_review(db_session):
     user = await make_user(db_session, email="solo_spec@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     result = await approve_bcd(
@@ -122,7 +145,10 @@ async def test_single_user_with_two_specialties_stays_review(db_session):
 @pytest.mark.asyncio
 async def test_admin_still_instant_approves(db_session):
     admin = await make_user(db_session, email="admin_spec@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, admin.id)
 
     result = await approve_bcd(db_session, bcd.id, admin.id, ["admin"])
@@ -133,7 +159,10 @@ async def test_admin_still_instant_approves(db_session):
 async def test_specialist_then_admin_approves(db_session):
     spec = await make_user(db_session, email="spec_pre@test.com")
     admin = await make_user(db_session, email="admin_post@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, spec.id)
 
     await approve_bcd(db_session, bcd.id, spec.id, ["exegete"])
@@ -148,7 +177,10 @@ async def test_specialist_then_admin_approves(db_session):
 @pytest.mark.asyncio
 async def test_viewer_cannot_approve(db_session):
     user = await make_user(db_session, email="viewer_spec@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     with pytest.raises(AuthorizationError, match="admin, facilitator, or specialist"):
@@ -158,7 +190,10 @@ async def test_viewer_cannot_approve(db_session):
 @pytest.mark.asyncio
 async def test_analyst_cannot_approve(db_session):
     user = await make_user(db_session, email="analyst_spec@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     with pytest.raises(AuthorizationError, match="admin, facilitator, or specialist"):
@@ -171,7 +206,10 @@ async def test_analyst_cannot_approve(db_session):
 @pytest.mark.asyncio
 async def test_approval_status_empty(db_session):
     user = await make_user(db_session, email="status1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     status = await get_approval_status(db_session, bcd.id)
@@ -186,7 +224,10 @@ async def test_approval_status_empty(db_session):
 @pytest.mark.asyncio
 async def test_approval_status_partial(db_session):
     user = await make_user(db_session, email="status2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user.id)
 
     await approve_bcd(db_session, bcd.id, user.id, ["exegete"])
@@ -203,7 +244,10 @@ async def test_approval_status_partial(db_session):
 async def test_approval_status_complete(db_session):
     user1 = await make_user(db_session, email="status3a@test.com")
     user2 = await make_user(db_session, email="status3b@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     bcd = await make_bcd(db_session, book.id, user1.id)
 
     await approve_bcd(db_session, bcd.id, user1.id, ["exegete"])

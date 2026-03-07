@@ -126,10 +126,18 @@ def test_build_established_items_all_categories():
             {"label": "Famine", "opened_at": {"chapter": 1, "verse": 1}, "status_by_episode": []},
         ],
         institutions=[
-            {"name": "gleaning", "first_invoked": {"chapter": 2, "verse": 2}, "what_it_is": "right"},
+            {
+                "name": "gleaning",
+                "first_invoked": {"chapter": 2, "verse": 2},
+                "what_it_is": "right",
+            },
         ],
         places=[
-            {"name": "Bethlehem", "first_appears": {"chapter": 1, "verse": 1}, "meaning_and_function": "home"},
+            {
+                "name": "Bethlehem",
+                "first_appears": {"chapter": 1, "verse": 1},
+                "meaning_and_function": "home",
+            },
         ],
         objects=[
             {"name": "grain", "first_appears": {"chapter": 2, "verse": 2}, "what_it_is": "food"},
@@ -145,10 +153,21 @@ def test_build_established_items_all_categories():
 @pytest.mark.asyncio
 async def test_entry_brief_places_in_established_items(db_session):
     user = await make_user(db_session, email="eb_places@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
-    await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    p2 = await make_pericope(db_session, book.id, chapter_start=2, verse_start=1, chapter_end=2, verse_end=7, reference="Ruth 2:1-7")
+    await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    p2 = await make_pericope(
+        db_session, book.id,
+        chapter_start=2, verse_start=1,
+        chapter_end=2, verse_end=7, reference="Ruth 2:1-7",
+    )
 
     brief = await compute_entry_brief(db_session, p2.id)
 
@@ -164,10 +183,21 @@ async def test_entry_brief_places_in_established_items(db_session):
 @pytest.mark.asyncio
 async def test_entry_brief_objects_in_established_items(db_session):
     user = await make_user(db_session, email="eb_objects@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
     await make_bcd(db_session, book.id, user.id, status="approved", **SAMPLE_BCD_DATA)
-    await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    p2 = await make_pericope(db_session, book.id, chapter_start=2, verse_start=4, chapter_end=2, verse_end=10, reference="Ruth 2:4-10")
+    await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    p2 = await make_pericope(
+        db_session, book.id,
+        chapter_start=2, verse_start=4,
+        chapter_end=2, verse_end=10, reference="Ruth 2:4-10",
+    )
 
     brief = await compute_entry_brief(db_session, p2.id)
 
@@ -187,7 +217,11 @@ def test_format_entry_brief_includes_places():
         "participants": [],
         "active_threads": [],
         "places": [
-            {"name": "Bethlehem", "english_gloss": "House of Bread", "meaning_and_function": "home"},
+            {
+                "name": "Bethlehem",
+                "english_gloss": "House of Bread",
+                "meaning_and_function": "home",
+            },
         ],
         "objects": [],
         "institutions": [],

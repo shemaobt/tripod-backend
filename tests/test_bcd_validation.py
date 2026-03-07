@@ -1,7 +1,7 @@
 import pytest
 
 from app.services.book_context.validate_against_brief import validate_map_against_brief
-from tests.baker import make_bcd, make_bible_book, make_meaning_map, make_pericope, make_user
+from tests.baker import make_bible_book, make_meaning_map, make_pericope, make_user
 
 SAMPLE_BCD_DATA = {
     "participant_register": [
@@ -26,7 +26,11 @@ SAMPLE_BCD_DATA = {
 SAMPLE_MAP_DATA_WITH_ESTABLISHED = {
     "level_1": {"arc": "The narrative arc of the passage."},
     "already_established": [
-        {"category": "participant", "name": "Naomi", "description": "Naomi: wife and mother", "verse_reference": "1:2"},
+        {
+            "category": "participant", "name": "Naomi",
+            "description": "Naomi: wife and mother",
+            "verse_reference": "1:2",
+        },
     ],
     "level_2_scenes": [],
     "level_3_propositions": [
@@ -43,7 +47,11 @@ SAMPLE_MAP_DATA_WITH_ESTABLISHED = {
 SAMPLE_MAP_DATA_CLEAN_L3 = {
     "level_1": {"arc": "The narrative arc of the passage."},
     "already_established": [
-        {"category": "participant", "name": "Naomi", "description": "Naomi: wife and mother", "verse_reference": "1:2"},
+        {
+            "category": "participant", "name": "Naomi",
+            "description": "Naomi: wife and mother",
+            "verse_reference": "1:2",
+        },
     ],
     "level_2_scenes": [],
     "level_3_propositions": [
@@ -67,7 +75,11 @@ SAMPLE_MAP_DATA_NO_ESTABLISHED = {
 SAMPLE_MAP_DATA_FIRST_PERICOPE = {
     "level_1": {"arc": "The arc."},
     "already_established": [
-        {"category": "event", "name": "Opening", "description": "Nothing. This is the opening of the book.", "verse_reference": ""},
+        {
+            "category": "event", "name": "Opening",
+            "description": "Nothing. This is the opening of the book.",
+            "verse_reference": "",
+        },
     ],
     "level_2_scenes": [],
     "level_3_propositions": [],
@@ -77,10 +89,24 @@ SAMPLE_MAP_DATA_FIRST_PERICOPE = {
 @pytest.mark.asyncio
 async def test_warns_missing_established_list_non_first_pericope(db_session):
     user = await make_user(db_session, email="val1@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
-    await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    pericope2 = await make_pericope(db_session, book.id, chapter_start=1, verse_start=6, chapter_end=1, verse_end=18, reference="Ruth 1:6-18")
-    mm = await make_meaning_map(db_session, pericope2.id, user.id, data=SAMPLE_MAP_DATA_NO_ESTABLISHED)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
+    await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    pericope2 = await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=6,
+        chapter_end=1, verse_end=18, reference="Ruth 1:6-18",
+    )
+    mm = await make_meaning_map(
+        db_session, pericope2.id, user.id,
+        data=SAMPLE_MAP_DATA_NO_ESTABLISHED,
+    )
 
     issues = await validate_map_against_brief(db_session, mm)
 
@@ -90,9 +116,19 @@ async def test_warns_missing_established_list_non_first_pericope(db_session):
 @pytest.mark.asyncio
 async def test_passes_first_pericope_with_nothing_entry(db_session):
     user = await make_user(db_session, email="val2@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
-    pericope = await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    mm = await make_meaning_map(db_session, pericope.id, user.id, data=SAMPLE_MAP_DATA_FIRST_PERICOPE)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
+    pericope = await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    mm = await make_meaning_map(
+        db_session, pericope.id, user.id,
+        data=SAMPLE_MAP_DATA_FIRST_PERICOPE,
+    )
 
     issues = await validate_map_against_brief(db_session, mm)
 
@@ -102,10 +138,24 @@ async def test_passes_first_pericope_with_nothing_entry(db_session):
 @pytest.mark.asyncio
 async def test_warns_established_name_in_level_3(db_session):
     user = await make_user(db_session, email="val3@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
-    await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    pericope2 = await make_pericope(db_session, book.id, chapter_start=1, verse_start=6, chapter_end=1, verse_end=18, reference="Ruth 1:6-18")
-    mm = await make_meaning_map(db_session, pericope2.id, user.id, data=SAMPLE_MAP_DATA_WITH_ESTABLISHED)
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
+    await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    pericope2 = await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=6,
+        chapter_end=1, verse_end=18, reference="Ruth 1:6-18",
+    )
+    mm = await make_meaning_map(
+        db_session, pericope2.id, user.id,
+        data=SAMPLE_MAP_DATA_WITH_ESTABLISHED,
+    )
 
     issues = await validate_map_against_brief(db_session, mm)
 
@@ -115,9 +165,20 @@ async def test_warns_established_name_in_level_3(db_session):
 @pytest.mark.asyncio
 async def test_passes_when_level_3_has_no_established_names(db_session):
     user = await make_user(db_session, email="val4@test.com")
-    book = await make_bible_book(db_session, name="Ruth", abbreviation="Rth", order=8, chapter_count=4)
-    await make_pericope(db_session, book.id, chapter_start=1, verse_start=1, chapter_end=1, verse_end=5, reference="Ruth 1:1-5")
-    pericope2 = await make_pericope(db_session, book.id, chapter_start=1, verse_start=6, chapter_end=1, verse_end=18, reference="Ruth 1:6-18")
+    book = await make_bible_book(
+        db_session, name="Ruth", abbreviation="Rth",
+        order=8, chapter_count=4,
+    )
+    await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=1,
+        chapter_end=1, verse_end=5, reference="Ruth 1:1-5",
+    )
+    pericope2 = await make_pericope(
+        db_session, book.id,
+        chapter_start=1, verse_start=6,
+        chapter_end=1, verse_end=18, reference="Ruth 1:6-18",
+    )
     mm = await make_meaning_map(db_session, pericope2.id, user.id, data=SAMPLE_MAP_DATA_CLEAN_L3)
 
     issues = await validate_map_against_brief(db_session, mm)

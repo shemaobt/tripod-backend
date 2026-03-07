@@ -1,4 +1,3 @@
-import pytest
 
 from app.services.meaning_map.generator import _build_generation_prompt, _format_entry_brief
 
@@ -47,7 +46,11 @@ def test_format_entry_brief_first_pericope():
 def test_format_entry_brief_resolved_thread():
     brief = {
         "established_items": [
-            {"category": "event", "name": "Famine", "description": "A famine in the land", "verse_reference": "1:1"},
+            {
+                "category": "event", "name": "Famine",
+                "description": "A famine in the land",
+                "verse_reference": "1:1",
+            },
         ],
         "participants": [],
         "active_threads": [
@@ -63,10 +66,18 @@ def test_format_entry_brief_resolved_thread():
 
 
 def test_build_prompt_includes_entry_brief():
-    bhsa = {"clauses": [{"verse": 1, "clause_type": "Way0", "text": "test", "gloss": "test", "is_mainline": True, "chain_position": "initial"}]}
+    bhsa = {"clauses": [{
+        "verse": 1, "clause_type": "Way0", "text": "test",
+        "gloss": "test", "is_mainline": True,
+        "chain_position": "initial",
+    }]}
     brief = {
         "established_items": [
-            {"category": "participant", "name": "Ruth", "description": "Ruth: a Moabitess", "verse_reference": "1:4"},
+            {
+                "category": "participant", "name": "Ruth",
+                "description": "Ruth: a Moabitess",
+                "verse_reference": "1:4",
+            },
         ],
         "participants": [],
         "active_threads": [],

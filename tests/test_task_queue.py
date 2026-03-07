@@ -17,6 +17,7 @@ def test_generate_bcd_task_function_exists():
 
 def test_generate_bcd_task_is_async():
     import asyncio
+
     from app.tasks.generate_bcd import generate_bcd_task
 
     assert asyncio.iscoroutinefunction(generate_bcd_task)
