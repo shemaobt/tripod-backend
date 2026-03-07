@@ -7,14 +7,17 @@ from app.db.models.book_context import BCDStatus, BookContextDocument
 async def get_latest_approved(
     db: AsyncSession, book_id: str
 ) -> BookContextDocument | None:
-    """Return the active BCD for a book. Prefers explicitly active, falls back to latest by version."""
-    # First: check for an explicitly active BCD (any non-generating status)
+    """Return the latest approved BCD for a book.
+
+    Prefers explicitly active, falls back to latest approved.
+    """
+    # First: check for an explicitly active + approved BCD
     result = await db.execute(
         select(BookContextDocument)
         .where(
             BookContextDocument.book_id == book_id,
-            BookContextDocument.is_active == True,
-            BookContextDocument.status != BCDStatus.GENERATING,
+            BookContextDocument.is_active,
+            BookContextDocument.status == BCDStatus.APPROVED,
         )
         .limit(1)
     )
@@ -22,12 +25,12 @@ async def get_latest_approved(
     if active:
         return active
 
-    # Fallback: latest non-generating version
+    # Fallback: latest approved version
     result = await db.execute(
         select(BookContextDocument)
         .where(
             BookContextDocument.book_id == book_id,
-            BookContextDocument.status != BCDStatus.GENERATING,
+            BookContextDocument.status == BCDStatus.APPROVED,
         )
         .order_by(BookContextDocument.version.desc())
         .limit(1)
