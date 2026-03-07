@@ -7,6 +7,7 @@ from app.services.project.grant_user_access import grant_user_access
 from app.services.project.list_projects_accessible_to_user import (
     list_projects_accessible_to_user,
 )
+from app.services.project.update_project import update_project
 from app.services.project.update_project_location import update_project_location
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "grant_organization_access",
     "grant_user_access",
     "list_projects_accessible_to_user",
+    "update_project",
     "update_project_location",
 ]

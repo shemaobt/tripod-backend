@@ -39,6 +39,17 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/projects/PROJECT_ID
 Authorization: Bearer {{accessToken}}
 
+### Update project (general)
+PATCH {{baseUrl}}/api/projects/PROJECT_ID
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Updated Project Name",
+  "description": "Updated description",
+  "language_id": "LANGUAGE_ID"
+}
+
 ### Update project location
 PATCH {{baseUrl}}/api/projects/PROJECT_ID/location
 Content-Type: application/json

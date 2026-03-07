@@ -13,6 +13,7 @@ from app.models.project import (
     ProjectLocationUpdate,
     ProjectOrganizationAccessResponse,
     ProjectResponse,
+    ProjectUpdate,
     ProjectUserAccessResponse,
 )
 from app.services import phase_service, project_service
@@ -60,6 +61,26 @@ async def get_project(
     allowed = await project_service.can_access_project(db, user.id, project_id)
     if not allowed:
         raise AuthorizationError("You do not have access to this project")
+    return ProjectResponse.model_validate(project)
+
+
+@router.patch("/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: str,
+    payload: ProjectUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectResponse:
+    allowed = await project_service.can_access_project(db, user.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    project = await project_service.update_project(
+        db,
+        project_id,
+        name=payload.name,
+        description=payload.description,
+        language_id=payload.language_id,
+    )
     return ProjectResponse.model_validate(project)
 
 

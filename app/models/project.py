@@ -26,6 +26,12 @@ class ProjectResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ProjectUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=10000)
+    language_id: str | None = None
+
+
 class ProjectLocationUpdate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
