@@ -62,3 +62,21 @@ class ProjectOrganizationAccessResponse(BaseModel):
     granted_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ProjectUserAccessDetailResponse(BaseModel):
+    id: str
+    project_id: str
+    user_id: str
+    email: str
+    display_name: str | None
+    granted_at: datetime
+
+
+class ProjectOrganizationAccessDetailResponse(BaseModel):
+    id: str
+    project_id: str
+    organization_id: str
+    name: str
+    slug: str
+    granted_at: datetime

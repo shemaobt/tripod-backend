@@ -78,3 +78,19 @@ Authorization: Bearer {{accessToken}}
 {
   "organization_id": "ORGANIZATION_ID"
 }
+
+### List users with access to project
+GET {{baseUrl}}/api/projects/PROJECT_ID/access/users
+Authorization: Bearer {{accessToken}}
+
+### List organizations with access to project
+GET {{baseUrl}}/api/projects/PROJECT_ID/access/organizations
+Authorization: Bearer {{accessToken}}
+
+### Revoke user access to project
+DELETE {{baseUrl}}/api/projects/PROJECT_ID/access/users/USER_ID
+Authorization: Bearer {{accessToken}}
+
+### Revoke organization access to project
+DELETE {{baseUrl}}/api/projects/PROJECT_ID/access/organizations/ORGANIZATION_ID
+Authorization: Bearer {{accessToken}}

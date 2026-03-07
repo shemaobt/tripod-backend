@@ -11,9 +11,11 @@ from app.models.project import (
     ProjectGrantOrganizationAccess,
     ProjectGrantUserAccess,
     ProjectLocationUpdate,
+    ProjectOrganizationAccessDetailResponse,
     ProjectOrganizationAccessResponse,
     ProjectResponse,
     ProjectUpdate,
+    ProjectUserAccessDetailResponse,
     ProjectUserAccessResponse,
 )
 from app.services import phase_service, project_service
@@ -142,6 +144,92 @@ async def grant_organization_access(
         db, project_id, payload.organization_id
     )
     return ProjectOrganizationAccessResponse.model_validate(access)
+
+
+@router.get(
+    "/{project_id}/access/users",
+    response_model=list[ProjectUserAccessDetailResponse],
+)
+async def list_user_access(
+    project_id: str,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ProjectUserAccessDetailResponse]:
+    allowed = await project_service.can_access_project(db, actor.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await project_service.get_project_or_404(db, project_id)
+    rows = await project_service.list_project_user_access(db, project_id)
+    return [
+        ProjectUserAccessDetailResponse(
+            id=access.id,
+            project_id=access.project_id,
+            user_id=access.user_id,
+            email=user.email,
+            display_name=user.display_name,
+            granted_at=access.granted_at,
+        )
+        for access, user in rows
+    ]
+
+
+@router.get(
+    "/{project_id}/access/organizations",
+    response_model=list[ProjectOrganizationAccessDetailResponse],
+)
+async def list_organization_access(
+    project_id: str,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ProjectOrganizationAccessDetailResponse]:
+    allowed = await project_service.can_access_project(db, actor.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await project_service.get_project_or_404(db, project_id)
+    rows = await project_service.list_project_organization_access(db, project_id)
+    return [
+        ProjectOrganizationAccessDetailResponse(
+            id=access.id,
+            project_id=access.project_id,
+            organization_id=access.organization_id,
+            name=org.name,
+            slug=org.slug,
+            granted_at=access.granted_at,
+        )
+        for access, org in rows
+    ]
+
+
+@router.delete(
+    "/{project_id}/access/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def revoke_user_access(
+    project_id: str,
+    user_id: str,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    allowed = await project_service.can_access_project(db, actor.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await project_service.revoke_user_access(db, project_id, user_id)
+
+
+@router.delete(
+    "/{project_id}/access/organizations/{organization_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def revoke_organization_access(
+    project_id: str,
+    organization_id: str,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    allowed = await project_service.can_access_project(db, actor.id, project_id)
+    if not allowed:
+        raise AuthorizationError("You do not have access to this project")
+    await project_service.revoke_organization_access(db, project_id, organization_id)
 
 
 @router.get("/{project_id}/phases", response_model=list[PhaseResponse])
