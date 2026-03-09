@@ -26,8 +26,14 @@ class UserResponse(BaseModel):
     id: str
     email: EmailStr
     display_name: str | None
+    avatar_url: str | None = None
     is_active: bool
     is_platform_admin: bool
+
+
+class ProfileUpdate(BaseModel):
+    display_name: str | None = Field(default=None, max_length=120)
+    avatar_url: str | None = None
 
 
 class AuthResponse(BaseModel):

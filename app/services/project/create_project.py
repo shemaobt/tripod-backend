@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.project import Project
+from app.services.project.grant_user_access import grant_user_access
 
 
 async def create_project(
@@ -11,6 +12,7 @@ async def create_project(
     latitude: float | None = None,
     longitude: float | None = None,
     location_display_name: str | None = None,
+    creator_user_id: str | None = None,
 ) -> Project:
     project = Project(
         name=name,
@@ -23,4 +25,8 @@ async def create_project(
     db.add(project)
     await db.commit()
     await db.refresh(project)
+
+    if creator_user_id:
+        await grant_user_access(db, project.id, creator_user_id)
+
     return project
