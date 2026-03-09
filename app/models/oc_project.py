@@ -13,6 +13,18 @@ class OCProjectUserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class OCAddMemberRequest(BaseModel):
+    user_id: str
+    role: str = Field(default="user", max_length=30)
+
+
+class OCProjectStatsResponse(BaseModel):
+    project_id: str
+    total_recordings: int
+    total_duration_seconds: float
+    total_file_size_bytes: int
+
+
 class OCProjectInviteCreate(BaseModel):
     email: EmailStr
     role: str = Field(default="user", max_length=30)
