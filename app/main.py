@@ -16,8 +16,8 @@ from app.api.meaning_maps import router as meaning_maps_router
 from app.api.notifications import router as notifications_router
 from app.api.organizations import router as organizations_router
 from app.api.pericopes import router as pericopes_router
-from app.api.places import router as places_router
 from app.api.phases import router as phases_router
+from app.api.places import router as places_router
 from app.api.projects import router as projects_router
 from app.api.rag import router as rag_router
 from app.api.roles import router as roles_router

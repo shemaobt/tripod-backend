@@ -5,7 +5,7 @@ from app.db.models.auth import User
 
 
 async def search_users(db: AsyncSession, query: str) -> list[User]:
-    stmt: Select[tuple[User]] = select(User).where(User.is_active == True)
+    stmt: Select[tuple[User]] = select(User).where(User.is_active.is_(True))
     if query.strip():
         pattern = f"%{query.strip()}%"
         stmt = stmt.where(
