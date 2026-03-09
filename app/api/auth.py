@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.db.models.auth import User
 from app.models.auth import (
     AuthResponse,
+    ProfileUpdate,
     TokenRefreshRequest,
     TokenResponse,
     UserLoginRequest,
@@ -23,6 +24,7 @@ def _user_response(user: User) -> UserResponse:
         id=user.id,
         email=user.email,
         display_name=user.display_name,
+        avatar_url=user.avatar_url,
         is_active=user.is_active,
         is_platform_admin=user.is_platform_admin,
     )
@@ -63,6 +65,21 @@ async def logout(payload: TokenRefreshRequest, db: AsyncSession = Depends(get_db
 
 @router.get("/me", response_model=UserResponse)
 async def me(user: User = Depends(get_current_user)) -> UserResponse:
+    return _user_response(user)
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    payload: ProfileUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    if payload.display_name is not None:
+        user.display_name = payload.display_name
+    if payload.avatar_url is not None:
+        user.avatar_url = payload.avatar_url if payload.avatar_url else None
+    await db.commit()
+    await db.refresh(user)
     return _user_response(user)
 
 

@@ -7,6 +7,7 @@ class UserListResponse(BaseModel):
     id: str
     email: str
     display_name: str | None
+    avatar_url: str | None
     is_active: bool
     is_platform_admin: bool
     created_at: datetime
@@ -17,6 +18,7 @@ class UserListResponse(BaseModel):
 class UserUpdate(BaseModel):
     is_active: bool | None = None
     is_platform_admin: bool | None = None
+    avatar_url: str | None = None
 
 
 class UserRoleResponse(BaseModel):

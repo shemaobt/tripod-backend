@@ -9,12 +9,15 @@ async def update_user(
     user_id: str,
     is_active: bool | None = None,
     is_platform_admin: bool | None = None,
+    avatar_url: str | None = None,
 ) -> User:
     user = await get_user_by_id(db, user_id)
     if is_active is not None:
         user.is_active = is_active
     if is_platform_admin is not None:
         user.is_platform_admin = is_platform_admin
-    await db.flush()
+    if avatar_url is not None:
+        user.avatar_url = avatar_url if avatar_url else None
+    await db.commit()
     await db.refresh(user)
     return user
