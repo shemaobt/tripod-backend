@@ -36,16 +36,35 @@ Config is pulled from GCP Secret Manager at container startup — no env vars ar
 
 ## Local development
 
-Secrets are fetched from GCP Secret Manager via a sidecar (`gcp-secrets`) on startup.
+Secrets are stored in GCP Secret Manager (project `shemaobt-secrets`) and fetched at startup by a Docker Compose sidecar.
+
+### Prerequisites
+
+1. **Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install).**
+
+2. **Request secret access.** Ask a project admin to add you on the project.
+
+3. **Authenticate your local gcloud:**
+   ```bash
+   gcloud auth login                       # interactive login with the email that was granted access
+   gcloud auth application-default login   # sets Application Default Credentials (used by Docker)
+   ```
+
+4. **Verify access works** (optional but recommended):
+   ```bash
+   gcloud secrets versions access latest \
+     --secret=tripod_backend_jwt_secret \
+     --project=shemaobt-secrets
+   ```
+   If this prints a value, you're good. If it fails, double-check that step 2 was done for your email and that you logged in with the correct account in step 3.
+
+### Running the stack
 
 ```bash
-# 1. Authenticate
-gcloud auth application-default login
+# Start the backend (defaults to project shemaobt-secrets)
+SECRETS_PROJECT_ID=shemaobt-secrets docker compose up --build backend
 
-# 2. Start the stack (SECRETS_PROJECT_ID tells the sidecar which GCP project to read secrets from)
-SECRETS_PROJECT_ID=<id> docker compose up --build backend
-
-# 3. In another terminal — apply migrations, seed, run tests
+# In another terminal — apply migrations, seed, run tests
 docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run alembic upgrade head"
 docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run python scripts/seed_apps_roles.py"
 docker compose exec backend sh -c "set -a && . /run/secrets/.env && set +a && uv run pytest tests"
