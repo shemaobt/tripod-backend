@@ -33,6 +33,6 @@ async def update_app(
         app.platform = platform
     if is_active is not None:
         app.is_active = is_active
-    await db.flush()
+    await db.commit()
     await db.refresh(app)
     return app

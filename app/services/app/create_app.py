@@ -33,6 +33,6 @@ async def create_app(
         is_active=is_active,
     )
     db.add(app)
-    await db.flush()
+    await db.commit()
     await db.refresh(app)
     return app
