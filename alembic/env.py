@@ -13,6 +13,7 @@ from app.db.models import (  # noqa: F401
     language,
     meaning_map,
     notification,
+    oc_genre,
     org,
     phase,
     project,
