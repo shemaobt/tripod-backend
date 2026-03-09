@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_middleware import get_current_user, require_platform_admin
 from app.core.database import get_db
 from app.db.models.auth import User
-from app.models.app import AppCreate, AppResponse, AppRoleResponse, AppUpdate, UserAppResponse
+from app.models.app import (
+    AppCreate,
+    AppResponse,
+    AppRoleCreate,
+    AppRoleResponse,
+    AppUpdate,
+    UserAppResponse,
+)
 from app.services import app_service
 
 router = APIRouter()
@@ -140,3 +147,30 @@ async def list_app_roles(
 ) -> list[AppRoleResponse]:
     roles = await app_service.list_app_roles(db, app_id)
     return [AppRoleResponse.model_validate(r) for r in roles]
+
+
+@router.post("/{app_id}/roles", response_model=AppRoleResponse, status_code=status.HTTP_201_CREATED)
+async def create_app_role(
+    app_id: str,
+    payload: AppRoleCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_platform_admin),
+) -> AppRoleResponse:
+    role = await app_service.create_app_role(
+        db,
+        app_id,
+        role_key=payload.role_key,
+        label=payload.label,
+        description=payload.description,
+    )
+    return AppRoleResponse.model_validate(role)
+
+
+@router.delete("/{app_id}/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_app_role(
+    app_id: str,
+    role_id: str,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_platform_admin),
+) -> None:
+    await app_service.delete_app_role(db, app_id, role_id)

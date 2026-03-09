@@ -58,6 +58,12 @@ class UserAppResponse(BaseModel):
     is_platform_admin: bool = False
 
 
+class AppRoleCreate(BaseModel):
+    role_key: str
+    label: str
+    description: str | None = None
+
+
 class AppRoleResponse(BaseModel):
     id: str
     role_key: str
