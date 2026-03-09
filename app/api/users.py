@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_middleware import get_current_user, require_platform_admin
@@ -54,6 +54,15 @@ async def update_user(
         avatar_url=payload.avatar_url,
     )
     return UserListResponse.model_validate(user)
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_platform_admin),
+) -> None:
+    await user_service.delete_user(db, user_id)
 
 
 @router.get("/{user_id}/roles", response_model=list[UserRoleResponse])
