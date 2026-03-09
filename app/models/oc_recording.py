@@ -42,6 +42,7 @@ class RecordingResponse(BaseModel):
 
 
 class UploadUrlRequest(BaseModel):
+    recording_id: str
     format: str = Field(min_length=1, max_length=20)
 
 

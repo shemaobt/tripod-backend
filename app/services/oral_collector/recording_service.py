@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError
+from app.db.models.oc_project_user import OC_ProjectUser
 from app.db.models.oc_recording import OC_Recording
 from app.models.oc_recording import RecordingCreate, RecordingUpdate
 
@@ -71,6 +72,22 @@ async def get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
     if not recording:
         raise NotFoundError("Recording not found")
     return recording
+
+
+async def check_recording_access(
+    db: AsyncSession, recording: OC_Recording, user_id: str
+) -> None:
+    """Verify user is the recording owner or a project manager. Raises AuthorizationError."""
+    if recording.user_id == user_id:
+        return
+    stmt = select(OC_ProjectUser).where(
+        OC_ProjectUser.project_id == recording.project_id,
+        OC_ProjectUser.user_id == user_id,
+        OC_ProjectUser.role == "project_manager",
+    )
+    result = await db.execute(stmt)
+    if result.scalar_one_or_none() is None:
+        raise AuthorizationError("Only the recording owner or a project manager can modify this recording")
 
 
 async def create_recording(
