@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -90,7 +90,9 @@ async def check_recording_access(
     )
     result = await db.execute(stmt)
     if result.scalar_one_or_none() is None:
-        raise AuthorizationError("Only the recording owner or a project manager can modify this recording")
+        raise AuthorizationError(
+            "Only the recording owner or a project manager can modify this recording"
+        )
 
 
 async def create_recording(
@@ -180,7 +182,7 @@ async def generate_upload_url(
         content_type="audio/mp4",
     )
 
-    expires_at = datetime.now(timezone.utc) + expiry
+    expires_at = datetime.now(UTC) + expiry
 
     return {
         "recording_id": recording_id,
@@ -204,7 +206,7 @@ async def confirm_upload(db: AsyncSession, recording_id: str) -> OC_Recording:
 
     recording.upload_status = "uploaded"
     recording.gcs_url = gcs_url
-    recording.uploaded_at = datetime.now(timezone.utc)
+    recording.uploaded_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(recording)
     return recording

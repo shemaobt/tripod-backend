@@ -2,13 +2,13 @@ import asyncio
 import logging
 import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import NotFoundError
 from app.db.models.oc_recording import OC_Recording
 from app.models.oc_recording import SplitSegment
 from app.services.oral_collector.recording_service import (
@@ -143,7 +143,7 @@ async def split_recording(
                 upload_status="uploaded",
                 cleaning_status="none",
                 recorded_at=recording.recorded_at,
-                uploaded_at=datetime.now(timezone.utc),
+                uploaded_at=datetime.now(UTC),
             )
             db.add(new_recording)
             new_ids.append(new_id)
