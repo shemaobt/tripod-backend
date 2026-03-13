@@ -7,6 +7,7 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.db.models.auth import App, Role, User, UserAppRole
 
+
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Grant a role to a user for a specific app.")
     parser.add_argument("email", type=str, help="The email of the user to grant the role to.")

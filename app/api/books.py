@@ -22,7 +22,9 @@ async def list_books(
     return await meaning_map_service.list_books(db)
 
 
-@router.get("/dashboard-summary", response_model=DashboardSummaryResponse, dependencies=[_mm_access])
+@router.get(
+    "/dashboard-summary", response_model=DashboardSummaryResponse, dependencies=[_mm_access]
+)
 async def dashboard_summary(
     db: AsyncSession = Depends(get_db),
 ) -> DashboardSummaryResponse:

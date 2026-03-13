@@ -9,8 +9,8 @@ from app.models.phase import (
     PhaseCreate,
     PhaseDependencyResponse,
     PhaseResponse,
-    PhaseUpdate,
     PhasesWithDepsResponse,
+    PhaseUpdate,
 )
 from app.services import phase_service
 

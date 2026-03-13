@@ -18,6 +18,7 @@ from tests.baker import (
     make_user,
 )
 
+
 @pytest.mark.asyncio
 async def test_export_json_returns_valid_json(db_session) -> None:
     user = await make_user(db_session, email="analyst43@test.com")
@@ -137,10 +138,10 @@ async def test_seed_books_ot_enabled_nt_disabled(db_session) -> None:
     await seed_books(db_session)
     books = await list_books(db_session)
     for book in books:
-        if book["testament"] == "OT":
-            assert book["is_enabled"] is True, f"{book['name']} should be enabled"
+        if book.testament == "OT":
+            assert book.is_enabled is True, f"{book.name} should be enabled"
         else:
-            assert book["is_enabled"] is False, f"{book['name']} should be disabled"
+            assert book.is_enabled is False, f"{book.name} should be disabled"
 
 @pytest.mark.asyncio
 async def test_ensure_ot_passes_for_enabled_book(db_session) -> None:

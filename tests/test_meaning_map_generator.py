@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.models.bhsa import BHSAStatus
 from app.models.meaning_map import PMMLevel1, ProseMeaningMap
 from app.services.meaning_map.generator import (
     GenerationError,
@@ -78,7 +79,9 @@ def mock_settings():
 @pytest.mark.asyncio
 @patch("app.services.meaning_map.generator.bhsa_loader")
 async def test_generate_raises_when_bhsa_not_loaded(mock_bhsa, mock_settings) -> None:
-    mock_bhsa.get_status.return_value = {"is_loaded": False}
+    mock_bhsa.get_status.return_value = BHSAStatus(
+        is_loaded=False, is_loading=False, message="Not loaded"
+    )
 
     with pytest.raises(GenerationError, match="BHSA data is not loaded"):
         await generate_meaning_map("Genesis 1:1-5", settings=mock_settings)
@@ -86,7 +89,9 @@ async def test_generate_raises_when_bhsa_not_loaded(mock_bhsa, mock_settings) ->
 @pytest.mark.asyncio
 @patch("app.services.meaning_map.generator.bhsa_loader")
 async def test_generate_raises_when_qdrant_client_none(mock_bhsa, mock_settings) -> None:
-    mock_bhsa.get_status.return_value = {"is_loaded": True}
+    mock_bhsa.get_status.return_value = BHSAStatus(
+        is_loaded=True, is_loading=False, message="Ready"
+    )
     mock_bhsa.fetch_passage.return_value = FAKE_BHSA_DATA
 
     with pytest.raises(GenerationError, match="RAG service is not available"):
@@ -99,7 +104,9 @@ async def test_generate_raises_when_qdrant_client_none(mock_bhsa, mock_settings)
 async def test_generate_raises_on_llm_failure(
     mock_llm_cls, mock_bhsa, mock_rag_query, mock_settings
 ) -> None:
-    mock_bhsa.get_status.return_value = {"is_loaded": True}
+    mock_bhsa.get_status.return_value = BHSAStatus(
+        is_loaded=True, is_loading=False, message="Ready"
+    )
     mock_bhsa.fetch_passage.return_value = FAKE_BHSA_DATA
 
     rag_result = MagicMock()
@@ -123,7 +130,9 @@ async def test_generate_raises_on_llm_failure(
 async def test_generate_meaning_map_success(
     mock_llm_cls, mock_bhsa, mock_rag_query, mock_settings
 ) -> None:
-    mock_bhsa.get_status.return_value = {"is_loaded": True}
+    mock_bhsa.get_status.return_value = BHSAStatus(
+        is_loaded=True, is_loading=False, message="Ready"
+    )
     mock_bhsa.fetch_passage.return_value = FAKE_BHSA_DATA
 
     rag_result = MagicMock()

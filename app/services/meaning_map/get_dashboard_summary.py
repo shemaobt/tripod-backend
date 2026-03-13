@@ -5,6 +5,7 @@ from app.db.models.auth import User
 from app.db.models.meaning_map import BibleBook, MeaningMap, MeaningMapStatus, Pericope
 from app.models.meaning_map import AnalystSummary, DashboardSummaryResponse
 
+
 async def get_dashboard_summary(db: AsyncSession) -> DashboardSummaryResponse:
 
     analyst = User.__table__.alias("analyst")
@@ -12,13 +13,15 @@ async def get_dashboard_summary(db: AsyncSession) -> DashboardSummaryResponse:
     stmt = (
         select(
             func.count(distinct(Pericope.id)).label("total"),
-            func.count(distinct(case((MeaningMap.status == MeaningMapStatus.DRAFT, Pericope.id)))).label("draft"),
-            func.count(distinct(case((MeaningMap.status == MeaningMapStatus.CROSS_CHECK, Pericope.id)))).label(
-                "cross_check"
-            ),
-            func.count(distinct(case((MeaningMap.status == MeaningMapStatus.APPROVED, Pericope.id)))).label(
-                "approved"
-            ),
+            func.count(distinct(case(
+                (MeaningMap.status == MeaningMapStatus.DRAFT, Pericope.id),
+            ))).label("draft"),
+            func.count(distinct(case(
+                (MeaningMap.status == MeaningMapStatus.CROSS_CHECK, Pericope.id),
+            ))).label("cross_check"),
+            func.count(distinct(case(
+                (MeaningMap.status == MeaningMapStatus.APPROVED, Pericope.id),
+            ))).label("approved"),
             func.count(distinct(case((MeaningMap.id.is_(None), Pericope.id)))).label("unstarted"),
             func.count(distinct(case((BibleBook.is_enabled.is_(True), BibleBook.id)))).label(
                 "enabled_books"
@@ -37,7 +40,9 @@ async def get_dashboard_summary(db: AsyncSession) -> DashboardSummaryResponse:
             analyst.c.display_name.label("name"),
             func.count(MeaningMap.id).label("assigned"),
             func.count(case((MeaningMap.status == MeaningMapStatus.DRAFT, 1))).label("draft"),
-            func.count(case((MeaningMap.status == MeaningMapStatus.CROSS_CHECK, 1))).label("cross_check"),
+            func.count(case(
+                (MeaningMap.status == MeaningMapStatus.CROSS_CHECK, 1),
+            )).label("cross_check"),
             func.count(case((MeaningMap.status == MeaningMapStatus.APPROVED, 1))).label("approved"),
         )
         .select_from(MeaningMap)

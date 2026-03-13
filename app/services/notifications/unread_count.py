@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.notification import Notification
 
+
 async def unread_count(db: AsyncSession, user_id: str, app_id: str) -> int:
 
     stmt = (

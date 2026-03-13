@@ -7,6 +7,7 @@ from app.core.exceptions import NotFoundError, RoleError
 from app.db.models.auth import AccessRequest, App, User
 from app.services.authorization.assign_role import assign_role
 
+
 async def review_access_request(
     db: AsyncSession,
     actor: User,

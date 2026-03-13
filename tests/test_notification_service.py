@@ -10,6 +10,7 @@ from app.services.notifications.mark_as_read import mark_as_read
 from app.services.notifications.unread_count import unread_count
 from tests.baker import make_app, make_user
 
+
 @pytest.mark.asyncio
 async def test_create_notification_basic(db_session) -> None:
     user = await make_user(db_session, email="notif-user1@test.com")

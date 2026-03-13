@@ -5,6 +5,7 @@ from app.core.exceptions import ConflictError
 from app.db.models.auth import Role
 from app.services.app.get_app_or_404 import get_app_or_404
 
+
 async def create_app_role(
     db: AsyncSession,
     app_id: str,

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import AccessRequest, App
 
+
 async def list_access_requests(
     db: AsyncSession,
     app_key: str | None = None,

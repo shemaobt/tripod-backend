@@ -4,6 +4,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.services import app_service
 from tests.baker import make_app, make_role, make_user, make_user_app_role
 
+
 @pytest.mark.asyncio
 async def test_list_apps(db_session) -> None:
     await make_app(db_session, app_key="alpha-app", name="Alpha App")

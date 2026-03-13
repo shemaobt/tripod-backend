@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.phase import Phase, PhaseDependency, ProjectPhase
 from app.models.phase import ProjectPhaseResponse, ProjectPhasesWithDepsResponse
 
+
 async def list_project_phases_with_deps(
     db: AsyncSession,
     project_id: str,

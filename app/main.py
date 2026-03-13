@@ -38,6 +38,7 @@ from app.core.qdrant import close_qdrant, init_qdrant
 from app.services.bhsa import loader
 from app.services.meaning_map.seed_books import seed_books
 
+
 def _load_bhsa_background() -> None:
 
     try:

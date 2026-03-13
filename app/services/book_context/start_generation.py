@@ -10,6 +10,7 @@ from app.db.models.book_context import BCDStatus, BookContextDocument
 from app.db.models.meaning_map import BibleBook
 from app.services.book_context.get_bcd import get_bcd_or_404
 
+
 @dataclass
 class GenerationTarget:
     target_bcd: BookContextDocument

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError
 from app.db.models.meaning_map import BibleBook, MeaningMap, Pericope
 
+
 async def get_map_with_book(db: AsyncSession, map_id: str) -> tuple[MeaningMap, BibleBook]:
 
     stmt = (

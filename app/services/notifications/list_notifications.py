@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.notification import Notification
 
+
 async def list_notifications(
     db: AsyncSession,
     user_id: str,

@@ -5,6 +5,7 @@ from app.core.exceptions import ConflictError
 from app.db.models.book_context import BCDStatus, BookContextDocument
 from app.services.book_context.get_bcd import get_bcd_or_404
 
+
 async def set_active_bcd(
     db: AsyncSession,
     bcd_id: str,

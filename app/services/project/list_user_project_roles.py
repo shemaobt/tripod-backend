@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.project import ProjectUserAccess
 
+
 async def list_user_project_roles(db: AsyncSession, user_id: str) -> dict[str, str]:
 
     stmt = select(ProjectUserAccess.project_id, ProjectUserAccess.role).where(

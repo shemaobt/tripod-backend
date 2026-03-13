@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.book_context._deps import mm_access
 from app.core.database import get_db
 from app.models.book_context import (
     PassageEntryBriefResponse,
@@ -11,8 +12,6 @@ from app.services.book_context.check_stale import check_bcd_staleness
 from app.services.book_context.compute_entry_brief import compute_entry_brief
 from app.services.book_context.validate_against_brief import validate_map_against_brief
 from app.services.meaning_map.get_meaning_map_or_404 import get_meaning_map_or_404
-
-from app.api.book_context._deps import mm_access
 
 router = APIRouter()
 

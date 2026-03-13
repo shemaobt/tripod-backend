@@ -5,6 +5,7 @@ from app.core.exceptions import NotFoundError
 from app.db.models.auth import AccessRequest
 from app.services.authorization.get_app_by_key import get_app_by_key
 
+
 async def get_user_access_request(
     db: AsyncSession,
     user_id: str,

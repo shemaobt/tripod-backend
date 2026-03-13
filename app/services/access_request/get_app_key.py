@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import App
 
+
 async def get_app_key(db: AsyncSession, app_id: str) -> str:
 
     result = await db.execute(select(App.app_key).where(App.id == app_id))

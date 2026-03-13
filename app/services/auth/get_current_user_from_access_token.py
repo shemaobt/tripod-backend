@@ -6,6 +6,7 @@ from app.db.models.auth import User
 from app.services.auth.get_user_by_id import get_user_by_id
 from app.utils.jwt import decode_token
 
+
 async def get_current_user_from_access_token(db: AsyncSession, token: str) -> User:
 
     payload = decode_token(token)

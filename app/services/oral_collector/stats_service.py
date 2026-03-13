@@ -11,6 +11,7 @@ from app.models.oc_stats import (
     SubcategoryStatItem,
 )
 
+
 async def get_genre_stats(db: AsyncSession, project_id: str) -> GenreStatsResponse:
 
     genre_stmt = (

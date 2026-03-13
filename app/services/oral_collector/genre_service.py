@@ -11,6 +11,7 @@ from app.models.oc_genre import (
     SubcategoryUpdate,
 )
 
+
 async def list_genres(db: AsyncSession) -> list[OC_Genre]:
 
     stmt = (

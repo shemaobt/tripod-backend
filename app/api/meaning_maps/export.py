@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.meaning_maps._deps import mm_access
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AuthorizationError
 from app.db.models.auth import User
 from app.db.models.meaning_map import MeaningMapStatus
 from app.services import meaning_map_service
-
-from app.api.meaning_maps._deps import mm_access
 
 router = APIRouter()
 

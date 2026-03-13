@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import App, Role, UserAppRole
 
+
 async def list_roles(
     db: AsyncSession, user_id: str, app_key: str | None = None
 ) -> list[tuple[str, str]]:

@@ -7,6 +7,7 @@ from app.db.models.org import OrganizationMember
 from app.db.models.project import Project, ProjectOrganizationAccess, ProjectUserAccess
 from app.models.oc_project import OCProjectStatsResponse
 
+
 async def get_user_project_role(db: AsyncSession, user_id: str, project_id: str) -> str | None:
 
     stmt = select(ProjectUserAccess.role).where(

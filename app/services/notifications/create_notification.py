@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.notification import Notification, NotificationMeaningMapDetail
 
+
 async def create_notification(
     db: AsyncSession,
     *,

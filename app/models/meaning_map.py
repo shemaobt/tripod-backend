@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.db.models.meaning_map import MeaningMapStatus, Testament
 
+
 class PMMPerson(BaseModel):
     name: str
     role: str

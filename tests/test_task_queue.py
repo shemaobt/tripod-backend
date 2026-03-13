@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_task_queue_module_lazy_imports():
     from app.core import task_queue
 
@@ -21,7 +22,7 @@ def test_generate_bcd_task_is_async():
 
 def test_get_task_app_requires_psycopg():
     try:
-        import psycopg
+        import psycopg  # noqa: F401
 
         has_psycopg = True
     except ImportError:

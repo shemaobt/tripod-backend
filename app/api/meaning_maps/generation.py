@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.meaning_maps._deps import mm_analyst
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.core.qdrant import get_qdrant_client
@@ -13,8 +14,6 @@ from app.services import meaning_map_service
 from app.services.book_context.compute_entry_brief import compute_entry_brief
 from app.services.meaning_map.generator import GenerationError
 from app.services.meaning_map.generator import generate_meaning_map as run_generation
-
-from app.api.meaning_maps._deps import mm_analyst
 
 logger = logging.getLogger(__name__)
 

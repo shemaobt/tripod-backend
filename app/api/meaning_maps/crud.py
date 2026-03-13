@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.meaning_maps._deps import mm_access, mm_analyst
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.db.models.auth import User
@@ -12,8 +13,6 @@ from app.models.meaning_map import (
     MeaningMapUpdateData,
 )
 from app.services import meaning_map_service
-
-from app.api.meaning_maps._deps import mm_access, mm_analyst
 
 router = APIRouter()
 

@@ -7,6 +7,7 @@ from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.db.models.auth import User
 from app.db.models.project import ProjectInvite, ProjectUserAccess
 
+
 async def create_invite(
     db: AsyncSession,
     project_id: str,

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.auth import User
 
+
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
 
     stmt: Select[tuple[User]] = select(User).where(User.email == email.lower())

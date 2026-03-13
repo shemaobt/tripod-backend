@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.org import OrganizationMember
 from app.db.models.project import ProjectOrganizationAccess, ProjectUserAccess
 
+
 async def can_access_project(
     db: AsyncSession,
     user_id: str,

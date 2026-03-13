@@ -10,6 +10,7 @@ from app.services.authorization.assert_can_manage_roles import assert_can_manage
 from app.services.authorization.get_app_by_key import get_app_by_key
 from app.services.authorization.get_role import get_role
 
+
 async def revoke_role(
     db: AsyncSession,
     actor_user: User,

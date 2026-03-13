@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError
 from app.db.models.notification import Notification
 
+
 async def mark_as_read(db: AsyncSession, notification_id: str, user_id: str) -> Notification:
 
     stmt = select(Notification).where(

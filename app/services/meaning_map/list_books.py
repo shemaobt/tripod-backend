@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.meaning_map import BibleBook, MeaningMap, MeaningMapStatus, Pericope
 from app.models.meaning_map import BibleBookResponse
 
+
 async def list_books(db: AsyncSession) -> list[BibleBookResponse]:
 
     j = outerjoin(Pericope, MeaningMap, Pericope.id == MeaningMap.pericope_id)

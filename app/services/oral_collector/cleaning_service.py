@@ -48,7 +48,9 @@ def _original_blob_name(blob_name: str) -> str:
 async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) -> OC_Recording:
 
     recording = await _get_recording(db, recording_id)
-    await require_project_manager(db, recording.project_id, user_id, action="trigger audio cleaning")
+    await require_project_manager(
+        db, recording.project_id, user_id, action="trigger audio cleaning"
+    )
 
     if not recording.gcs_url:
         raise NotFoundError("Recording has no uploaded audio file")

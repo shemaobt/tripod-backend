@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.meaning_map import MeaningMap, Pericope
 
+
 async def list_meaning_maps(
     db: AsyncSession,
     *,

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.projects._deps import assert_project_access
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.db.models.auth import User
@@ -11,8 +12,6 @@ from app.models.phase import (
     ProjectPhasesWithDepsResponse,
 )
 from app.services import phase_service
-
-from app.api.projects._deps import assert_project_access
 
 router = APIRouter()
 

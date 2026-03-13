@@ -6,6 +6,7 @@ from app.db.models.book_context import BCDApproval
 from app.models.book_context import BCDApprovalDetail, BCDApprovalStatusResponse
 from app.services.book_context.approve_bcd import SPECIALIST_ROLES
 
+
 async def get_approval_status(db: AsyncSession, bcd_id: str) -> BCDApprovalStatusResponse:
 
     result = await db.execute(select(BCDApproval).where(BCDApproval.bcd_id == bcd_id))

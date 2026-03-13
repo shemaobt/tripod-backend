@@ -5,6 +5,7 @@ from app.db.models.auth import UserAppRole
 from app.services.authorization.get_app_by_key import get_app_by_key
 from app.services.authorization.get_role import get_role
 
+
 async def has_role(db: AsyncSession, user_id: str, app_key: str, role_key: str) -> bool:
 
     app = await get_app_by_key(db, app_key)

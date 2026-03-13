@@ -2,7 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.phase import Phase, PhaseDependency
-from app.models.phase import PhasesWithDepsResponse, PhaseResponse
+from app.models.phase import PhaseResponse, PhasesWithDepsResponse
+
 
 async def list_all_phases_with_deps(db: AsyncSession) -> PhasesWithDepsResponse:
 

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.auth import RefreshToken
 from app.services.auth.hash_refresh_token import hash_refresh_token
 
+
 async def revoke_refresh_token(db: AsyncSession, refresh_token: str) -> None:
 
     token_hash = hash_refresh_token(refresh_token)

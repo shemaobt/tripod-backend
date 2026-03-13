@@ -6,6 +6,7 @@ from app.core.database import AsyncSessionLocal
 from app.db.models.auth import User
 from app.db.models.project import Project, ProjectUserAccess
 
+
 async def main():
     email = "admin@shemaywam.com"
     project_name = "Default Meaning Map Project"

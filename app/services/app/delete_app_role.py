@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.auth import Role
 
+
 async def delete_app_role(db: AsyncSession, app_id: str, role_id: str) -> None:
 
     stmt = select(Role).where(Role.id == role_id, Role.app_id == app_id)

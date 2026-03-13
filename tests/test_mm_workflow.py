@@ -17,6 +17,7 @@ from tests.baker import (
     make_user,
 )
 
+
 @pytest.mark.asyncio
 async def test_delete_meaning_map_success(db_session) -> None:
     user = await make_user(db_session, email="analyst13@test.com")

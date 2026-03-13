@@ -6,6 +6,7 @@ from app.services.book_context.approve_bcd import approve_bcd
 from app.services.book_context.get_approval_status import get_approval_status
 from tests.baker import make_bcd, make_bible_book, make_user
 
+
 @pytest.mark.asyncio
 async def test_exegete_can_approve(db_session):
     user = await make_user(db_session, email="exg1@test.com")
@@ -237,11 +238,11 @@ async def test_approval_status_empty(db_session):
 
     status = await get_approval_status(db_session, bcd.id)
 
-    assert status["approvals"] == []
-    assert status["covered_specialties"] == []
-    assert len(status["missing_specialties"]) == 3
-    assert status["distinct_reviewers"] == 0
-    assert status["is_complete"] is False
+    assert status.approvals == []
+    assert status.covered_specialties == []
+    assert len(status.missing_specialties) == 3
+    assert status.distinct_reviewers == 0
+    assert status.is_complete is False
 
 @pytest.mark.asyncio
 async def test_approval_status_partial(db_session):
@@ -259,10 +260,10 @@ async def test_approval_status_partial(db_session):
 
     status = await get_approval_status(db_session, bcd.id)
 
-    assert len(status["approvals"]) == 1
-    assert "exegete" in status["covered_specialties"]
-    assert status["distinct_reviewers"] == 1
-    assert status["is_complete"] is False
+    assert len(status.approvals) == 1
+    assert "exegete" in status.covered_specialties
+    assert status.distinct_reviewers == 1
+    assert status.is_complete is False
 
 @pytest.mark.asyncio
 async def test_approval_status_complete(db_session):
@@ -282,8 +283,8 @@ async def test_approval_status_complete(db_session):
 
     status = await get_approval_status(db_session, bcd.id)
 
-    assert len(status["approvals"]) == 2
-    assert "exegete" in status["covered_specialties"]
-    assert "biblical_language_specialist" in status["covered_specialties"]
-    assert status["distinct_reviewers"] == 2
-    assert status["is_complete"] is True
+    assert len(status.approvals) == 2
+    assert "exegete" in status.covered_specialties
+    assert "biblical_language_specialist" in status.covered_specialties
+    assert status.distinct_reviewers == 2
+    assert status.is_complete is True

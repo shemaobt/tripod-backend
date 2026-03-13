@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError
 from app.db.models.meaning_map import BibleBook, Pericope
 
+
 async def get_pericope_with_book(db: AsyncSession, pericope_id: str) -> tuple[Pericope, BibleBook]:
 
     stmt = (

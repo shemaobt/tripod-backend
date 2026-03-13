@@ -8,17 +8,6 @@ from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
 from app.core.db_url import async_database_url, ssl_connect_args
-from app.db.models import (
-    auth,
-    language,
-    meaning_map,
-    notification,
-    oc_genre,
-    oc_recording,
-    org,
-    phase,
-    project,
-)
 
 config = context.config
 settings = get_settings()

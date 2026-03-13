@@ -15,6 +15,7 @@ from tests.baker import (
     make_user,
 )
 
+
 @pytest.mark.asyncio
 async def test_create_pericope_success(db_session) -> None:
     book = await make_bible_book(db_session)

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.notification import Notification
 
+
 async def mark_all_as_read(db: AsyncSession, user_id: str) -> int:
 
     stmt = (

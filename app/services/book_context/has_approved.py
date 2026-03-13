@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.book_context import BCDStatus, BookContextDocument
 
+
 async def has_approved_bcd(db: AsyncSession, book_id: str) -> bool:
 
     result = await db.execute(

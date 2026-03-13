@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.book_context._deps import mm_access
 from app.core.auth_middleware import get_current_user
 from app.core.database import get_db
 from app.db.models.auth import User
@@ -14,8 +15,6 @@ from app.services.book_context.create_bcd import create_bcd
 from app.services.book_context.get_approval_status import get_approval_status
 from app.services.book_context.get_bcd import get_bcd_or_404
 from app.services.book_context.list_bcds import list_bcds
-
-from app.api.book_context._deps import mm_access
 
 router = APIRouter()
 

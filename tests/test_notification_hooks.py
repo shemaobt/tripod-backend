@@ -7,6 +7,7 @@ from app.services.meaning_map.add_feedback import add_feedback
 from app.services.meaning_map.transition_status import transition_status
 from tests.baker import make_bible_book, make_meaning_map, make_pericope, make_user
 
+
 @pytest.fixture
 async def mm_app(db_session):
 

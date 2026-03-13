@@ -5,6 +5,7 @@ from app.db.models.auth import User
 from app.db.models.meaning_map import MeaningMap, MeaningMapFeedback, Pericope
 from app.models.meaning_map import PericopeWithStatusResponse
 
+
 async def list_pericopes(
     db: AsyncSession, book_id: str, chapter: int | None = None
 ) -> list[PericopeWithStatusResponse]:
@@ -15,7 +16,7 @@ async def list_pericopes(
         select(func.count())
         .where(
             MeaningMapFeedback.meaning_map_id == MeaningMap.id,
-            MeaningMapFeedback.resolved == False,
+            MeaningMapFeedback.resolved.is_(False),
         )
         .correlate(MeaningMap)
         .scalar_subquery()
