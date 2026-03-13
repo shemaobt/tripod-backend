@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_app: Any = None
+_app: procrastinate.App | None = None
 
 
 def get_task_app() -> procrastinate.App:
