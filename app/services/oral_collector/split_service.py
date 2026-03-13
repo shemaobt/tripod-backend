@@ -11,10 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError
 from app.db.models.oc_recording import OC_Recording
 from app.models.oc_recording import SplitSegment
+from app.services.oral_collector.gcs_utils import upload_gcs_blob
 from app.services.oral_collector.recording_service import (
     FORMAT_EXTENSIONS,
-    GCS_OC_BUCKET,
-    GCS_OC_PROJECT,
     _gcs_blob_path,
     check_recording_access,
     get_recording,
@@ -55,16 +54,6 @@ async def _ffmpeg_split_segment(
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
         raise RuntimeError(f"FFmpeg failed: {stderr.decode()}")
-
-async def _upload_gcs_blob(blob_name: str, data: bytes, content_type: str) -> str:
-
-    from google.cloud import storage
-
-    client = storage.Client(project=GCS_OC_PROJECT)
-    bucket = client.bucket(GCS_OC_BUCKET)
-    blob = bucket.blob(blob_name)
-    blob.upload_from_string(data, content_type=content_type)
-    return f"https://storage.googleapis.com/{GCS_OC_BUCKET}/{blob_name}"
 
 def _content_type_for_format(fmt: str) -> str:
 
@@ -111,7 +100,7 @@ async def split_recording(
             segment_bytes = output_file.read_bytes()
             blob_path = _gcs_blob_path(recording.project_id, recording.genre_id, new_id, fmt)
             content_type = _content_type_for_format(fmt)
-            gcs_url = await _upload_gcs_blob(blob_path, segment_bytes, content_type)
+            gcs_url = await upload_gcs_blob(blob_path, segment_bytes, content_type)
 
             duration = seg.end_seconds - seg.start_seconds
             new_recording = OC_Recording(

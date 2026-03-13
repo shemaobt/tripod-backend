@@ -4,8 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.oc_genre import OC_Genre, OC_Subcategory
 from app.db.models.oc_recording import OC_Recording
 from app.db.models.project import Project, ProjectUserAccess
+from app.models.oc_stats import (
+    AdminStatsResponse,
+    GenreStatItem,
+    GenreStatsResponse,
+    SubcategoryStatItem,
+)
 
-async def get_genre_stats(db: AsyncSession, project_id: str) -> dict:
+async def get_genre_stats(db: AsyncSession, project_id: str) -> GenreStatsResponse:
 
     genre_stmt = (
         select(
@@ -22,12 +28,12 @@ async def get_genre_stats(db: AsyncSession, project_id: str) -> dict:
     )
     genre_result = await db.execute(genre_stmt)
     genres = [
-        {
-            "genre_id": row.genre_id,
-            "genre_name": row.genre_name,
-            "recording_count": row.recording_count,
-            "duration_seconds": float(row.duration_seconds),
-        }
+        GenreStatItem(
+            genre_id=row.genre_id,
+            genre_name=row.genre_name,
+            recording_count=row.recording_count,
+            duration_seconds=float(row.duration_seconds),
+        )
         for row in genre_result.all()
     ]
 
@@ -51,23 +57,23 @@ async def get_genre_stats(db: AsyncSession, project_id: str) -> dict:
     )
     sub_result = await db.execute(sub_stmt)
     subcategories = [
-        {
-            "subcategory_id": row.subcategory_id,
-            "subcategory_name": row.subcategory_name,
-            "genre_id": row.genre_id,
-            "recording_count": row.recording_count,
-            "duration_seconds": float(row.duration_seconds),
-        }
+        SubcategoryStatItem(
+            subcategory_id=row.subcategory_id,
+            subcategory_name=row.subcategory_name,
+            genre_id=row.genre_id,
+            recording_count=row.recording_count,
+            duration_seconds=float(row.duration_seconds),
+        )
         for row in sub_result.all()
     ]
 
-    return {
-        "project_id": project_id,
-        "genres": genres,
-        "subcategories": subcategories,
-    }
+    return GenreStatsResponse(
+        project_id=project_id,
+        genres=genres,
+        subcategories=subcategories,
+    )
 
-async def get_admin_stats(db: AsyncSession) -> dict:
+async def get_admin_stats(db: AsyncSession) -> AdminStatsResponse:
 
     project_count_stmt = select(func.count(func.distinct(OC_Recording.project_id)))
     project_result = await db.execute(project_count_stmt)
@@ -90,9 +96,9 @@ async def get_admin_stats(db: AsyncSession) -> dict:
     users_result = await db.execute(users_stmt)
     active_users = users_result.scalar_one()
 
-    return {
-        "total_projects": total_projects,
-        "total_languages": total_languages,
-        "total_hours": round(total_hours, 2),
-        "active_users": active_users,
-    }
+    return AdminStatsResponse(
+        total_projects=total_projects,
+        total_languages=total_languages,
+        total_hours=round(total_hours, 2),
+        active_users=active_users,
+    )

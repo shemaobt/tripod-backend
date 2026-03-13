@@ -2,8 +2,9 @@ from sqlalchemy import func, outerjoin, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.meaning_map import BibleBook, MeaningMap, MeaningMapStatus, Pericope
+from app.models.meaning_map import BibleBookResponse
 
-async def list_books(db: AsyncSession) -> list[dict]:
+async def list_books(db: AsyncSession) -> list[BibleBookResponse]:
 
     j = outerjoin(Pericope, MeaningMap, Pericope.id == MeaningMap.pericope_id)
 
@@ -33,19 +34,18 @@ async def list_books(db: AsyncSession) -> list[dict]:
     result = await db.execute(stmt)
     rows = result.all()
 
-    out = []
-    for book, pericope_count, approved_count in rows:
-        d = {
-            "id": book.id,
-            "name": book.name,
-            "abbreviation": book.abbreviation,
-            "testament": book.testament,
-            "order": book.order,
-            "chapter_count": book.chapter_count,
-            "is_enabled": book.is_enabled,
-            "pericope_count": pericope_count,
-            "approved_count": approved_count,
-            "created_at": book.created_at,
-        }
-        out.append(d)
-    return out
+    return [
+        BibleBookResponse(
+            id=book.id,
+            name=book.name,
+            abbreviation=book.abbreviation,
+            testament=book.testament,
+            order=book.order,
+            chapter_count=book.chapter_count,
+            is_enabled=book.is_enabled,
+            pericope_count=pericope_count,
+            approved_count=approved_count,
+            created_at=book.created_at,
+        )
+        for book, pericope_count, approved_count in rows
+    ]

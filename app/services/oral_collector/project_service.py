@@ -5,6 +5,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.oc_recording import OC_Recording
 from app.db.models.org import OrganizationMember
 from app.db.models.project import Project, ProjectOrganizationAccess, ProjectUserAccess
+from app.models.oc_project import OCProjectStatsResponse
 
 async def get_user_project_role(db: AsyncSession, user_id: str, project_id: str) -> str | None:
 
@@ -97,7 +98,7 @@ async def remove_member(db: AsyncSession, project_id: str, user_id: str) -> None
     await db.delete(member)
     await db.commit()
 
-async def get_project_stats(db: AsyncSession, project_id: str) -> dict:
+async def get_project_stats(db: AsyncSession, project_id: str) -> OCProjectStatsResponse:
 
     stmt = select(
         func.count(OC_Recording.id).label("total_recordings"),
@@ -107,9 +108,9 @@ async def get_project_stats(db: AsyncSession, project_id: str) -> dict:
 
     result = await db.execute(stmt)
     row = result.one()
-    return {
-        "project_id": project_id,
-        "total_recordings": row.total_recordings,
-        "total_duration_seconds": float(row.total_duration_seconds),
-        "total_file_size_bytes": int(row.total_file_size_bytes),
-    }
+    return OCProjectStatsResponse(
+        project_id=project_id,
+        total_recordings=row.total_recordings,
+        total_duration_seconds=float(row.total_duration_seconds),
+        total_file_size_bytes=int(row.total_file_size_bytes),
+    )

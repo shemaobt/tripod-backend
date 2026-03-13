@@ -2,11 +2,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.phase import Phase, PhaseDependency, ProjectPhase
+from app.models.phase import ProjectPhaseResponse, ProjectPhasesWithDepsResponse
 
 async def list_project_phases_with_deps(
     db: AsyncSession,
     project_id: str,
-) -> dict:
+) -> ProjectPhasesWithDepsResponse:
 
     stmt = (
         select(ProjectPhase, Phase)
@@ -33,14 +34,14 @@ async def list_project_phases_with_deps(
             deps_map[dep.phase_id].append(dep.depends_on_id)
 
     phases = [
-        {
-            "id": pp.id,
-            "phase_id": phase.id,
-            "phase_name": phase.name,
-            "phase_description": phase.description,
-            "status": pp.status,
-        }
+        ProjectPhaseResponse(
+            id=pp.id,
+            phase_id=phase.id,
+            phase_name=phase.name,
+            phase_description=phase.description,
+            status=pp.status,
+        )
         for pp, phase in rows
     ]
 
-    return {"phases": phases, "dependencies": deps_map}
+    return ProjectPhasesWithDepsResponse(phases=phases, dependencies=deps_map)

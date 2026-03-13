@@ -1,12 +1,13 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.notification import NotificationMeaningMapDetail
+from app.db.models.notification import Notification, NotificationMeaningMapDetail
 from app.models.notification import NotificationResponse
+
 
 async def enrich_with_details(
     db: AsyncSession,
-    notifications: list,
+    notifications: list[Notification],
 ) -> list[NotificationResponse]:
 
     if not notifications:

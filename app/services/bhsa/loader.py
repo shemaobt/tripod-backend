@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import Settings, get_settings
+from app.models.bhsa import BHSAStatus
 from app.services.bhsa.passage import extract_passage
 
 logger = logging.getLogger(__name__)
@@ -15,12 +16,12 @@ _is_loaded: bool = False
 _is_loading: bool = False
 _message: str = "Not loaded"
 
-def get_status() -> dict[str, Any]:
-    return {
-        "is_loaded": _is_loaded,
-        "is_loading": _is_loading,
-        "message": _message,
-    }
+def get_status() -> BHSAStatus:
+    return BHSAStatus(
+        is_loaded=_is_loaded,
+        is_loading=_is_loading,
+        message=_message,
+    )
 
 def load(*, settings: Settings | None = None, force: bool = False) -> None:
     from tf.app import use

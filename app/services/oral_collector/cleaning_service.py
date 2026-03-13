@@ -5,25 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import NotFoundError
 from app.db.models.oc_recording import OC_Recording
-from app.db.models.project import ProjectUserAccess
+from app.services.oral_collector.constants import GCS_OC_BUCKET, GCS_OC_PROJECT
+from app.services.oral_collector.gcs_utils import upload_gcs_blob
+from app.services.oral_collector.require_manager import require_project_manager
 
 logger = logging.getLogger(__name__)
-
-GCS_OC_BUCKET = "tripod-image-uploads"
-GCS_OC_PROJECT = "gen-lang-client-0886209230"
-
-async def _require_manager(db: AsyncSession, project_id: str, user_id: str) -> None:
-
-    stmt = select(ProjectUserAccess).where(
-        ProjectUserAccess.project_id == project_id,
-        ProjectUserAccess.user_id == user_id,
-        ProjectUserAccess.role == "manager",
-    )
-    result = await db.execute(stmt)
-    if result.scalar_one_or_none() is None:
-        raise AuthorizationError("Only project managers can trigger audio cleaning")
 
 async def _get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
 
@@ -43,15 +31,6 @@ async def _copy_gcs_blob(source_name: str, dest_name: str) -> None:
     source_blob = bucket.blob(source_name)
     bucket.copy_blob(source_blob, bucket, dest_name)
 
-async def _upload_gcs_blob(blob_name: str, data: bytes, content_type: str) -> None:
-
-    from google.cloud import storage
-
-    client = storage.Client(project=GCS_OC_PROJECT)
-    bucket = client.bucket(GCS_OC_BUCKET)
-    blob = bucket.blob(blob_name)
-    blob.upload_from_string(data, content_type=content_type)
-
 def _blob_name_from_url(gcs_url: str) -> str | None:
 
     prefix = f"https://storage.googleapis.com/{GCS_OC_BUCKET}/"
@@ -69,7 +48,7 @@ def _original_blob_name(blob_name: str) -> str:
 async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) -> OC_Recording:
 
     recording = await _get_recording(db, recording_id)
-    await _require_manager(db, recording.project_id, user_id)
+    await require_project_manager(db, recording.project_id, user_id, action="trigger audio cleaning")
 
     if not recording.gcs_url:
         raise NotFoundError("Recording has no uploaded audio file")
@@ -107,7 +86,7 @@ async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) ->
             original_name = _original_blob_name(blob_name)
             await _copy_gcs_blob(blob_name, original_name)
 
-            await _upload_gcs_blob(blob_name, cleaned_data, "application/octet-stream")
+            await upload_gcs_blob(blob_name, cleaned_data, "application/octet-stream")
 
         recording.cleaning_status = "cleaned"
         await db.commit()

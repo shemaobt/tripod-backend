@@ -222,7 +222,7 @@ async def generate_meaning_map(
 ) -> dict[str, Any]:
     settings = settings or get_settings()
 
-    if not bhsa_loader.get_status()["is_loaded"]:
+    if not bhsa_loader.get_status().is_loaded:
         raise GenerationError("BHSA data is not loaded. Contact an administrator.")
 
     try:
@@ -260,6 +260,8 @@ async def generate_meaning_map(
         )
         structured_llm = llm.with_structured_output(ProseMeaningMap)
         result = await structured_llm.ainvoke(prompt)
+        if isinstance(result, dict):
+            return result
         return result.model_dump()
     except Exception as e:
         raise GenerationError(f"LLM generation failed: {e}") from e

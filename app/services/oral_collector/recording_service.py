@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import AuthorizationError, NotFoundError
 from app.db.models.oc_recording import OC_Recording
 from app.db.models.project import ProjectUserAccess
-from app.models.oc_recording import RecordingCreate, RecordingUpdate
+from app.models.oc_recording import RecordingCreate, RecordingUpdate, UploadUrlResponse
+from app.services.oral_collector.constants import GCS_OC_BUCKET, GCS_OC_PROJECT
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,6 @@ FORMAT_EXTENSIONS: dict[str, str] = {
     "webm": ".webm",
 }
 
-GCS_OC_BUCKET = "tripod-image-uploads"
-GCS_OC_PROJECT = "gen-lang-client-0886209230"
 SIGNED_URL_EXPIRY_MINUTES = 15
 
 async def list_recordings(
@@ -131,7 +130,7 @@ async def generate_upload_url(
     recording_id: str,
     fmt: str,
     user_id: str,
-) -> dict:
+) -> UploadUrlResponse:
 
     from google.cloud import storage
 
@@ -154,12 +153,12 @@ async def generate_upload_url(
 
     expires_at = datetime.now(UTC) + expiry
 
-    return {
-        "recording_id": recording_id,
-        "server_id": recording_id,
-        "upload_url": upload_url,
-        "expires_at": expires_at,
-    }
+    return UploadUrlResponse(
+        recording_id=recording_id,
+        server_id=recording_id,
+        upload_url=upload_url,
+        expires_at=expires_at,
+    )
 
 async def confirm_upload(db: AsyncSession, recording_id: str) -> OC_Recording:
 
