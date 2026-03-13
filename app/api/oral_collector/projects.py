@@ -13,6 +13,7 @@ from app.services.oral_collector.project_member_counts import get_member_counts
 
 projects_router = APIRouter()
 
+
 @projects_router.get("", response_model=list[OCProjectListResponse])
 async def list_projects(
     user: User = Depends(get_current_user),
@@ -41,6 +42,7 @@ async def list_projects(
         )
         for p in projects
     ]
+
 
 @projects_router.get("/{project_id}/stats", response_model=OCProjectStatsResponse)
 async def get_project_stats(

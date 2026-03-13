@@ -18,6 +18,7 @@ from app.services.oral_collector import cleaning_service, recording_service, spl
 
 recordings_router = APIRouter()
 
+
 @recordings_router.get("", response_model=list[RecordingResponse])
 async def list_recordings(
     project_id: str = Query(..., description="Filter by project"),
@@ -43,6 +44,7 @@ async def list_recordings(
     )
     return [RecordingResponse.model_validate(r) for r in recordings]
 
+
 @recordings_router.get("/{recording_id}", response_model=RecordingResponse)
 async def get_recording(
     recording_id: str,
@@ -52,6 +54,7 @@ async def get_recording(
 
     recording = await recording_service.get_recording(db, recording_id)
     return RecordingResponse.model_validate(recording)
+
 
 @recordings_router.post(
     "",
@@ -67,6 +70,7 @@ async def create_recording(
     recording = await recording_service.create_recording(db, payload, user.id)
     return RecordingResponse.model_validate(recording)
 
+
 @recordings_router.patch("/{recording_id}", response_model=RecordingResponse)
 async def update_recording(
     recording_id: str,
@@ -80,6 +84,7 @@ async def update_recording(
     recording = await recording_service.update_recording(db, recording_id, payload)
     return RecordingResponse.model_validate(recording)
 
+
 @recordings_router.delete("/{recording_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_recording(
     recording_id: str,
@@ -91,6 +96,7 @@ async def delete_recording(
     await recording_service.check_recording_access(db, existing, user.id)
     await recording_service.delete_recording(db, recording_id)
 
+
 @recordings_router.post("/upload-url", response_model=UploadUrlResponse)
 async def request_upload_url(
     payload: UploadUrlRequest,
@@ -101,6 +107,7 @@ async def request_upload_url(
     return await recording_service.generate_upload_url(
         db, payload.recording_id, payload.format, user.id
     )
+
 
 @recordings_router.post("/{recording_id}/confirm-upload", response_model=RecordingResponse)
 async def confirm_upload(
@@ -114,6 +121,7 @@ async def confirm_upload(
     recording = await recording_service.confirm_upload(db, recording_id)
     return RecordingResponse.model_validate(recording)
 
+
 @recordings_router.post("/{recording_id}/split", response_model=SplitResponse)
 async def split_recording(
     recording_id: str,
@@ -125,6 +133,7 @@ async def split_recording(
     new_ids = await split_service.split_recording(db, recording_id, payload.segments, user.id)
     return SplitResponse(recording_ids=new_ids)
 
+
 @recordings_router.post("/{recording_id}/clean", response_model=RecordingResponse)
 async def trigger_cleaning(
     recording_id: str,
@@ -134,6 +143,7 @@ async def trigger_cleaning(
 
     recording = await cleaning_service.trigger_cleaning(db, recording_id, user.id)
     return RecordingResponse.model_validate(recording)
+
 
 @recordings_router.get("/{recording_id}/clean-status", response_model=CleaningStatusResponse)
 async def get_cleaning_status(

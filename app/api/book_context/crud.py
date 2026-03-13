@@ -18,6 +18,7 @@ from app.services.book_context.list_bcds import list_bcds
 
 router = APIRouter()
 
+
 @router.get("", response_model=list[BCDListResponse], dependencies=[mm_access])
 async def list_book_context_documents(
     book_id: str | None = Query(default=None),
@@ -25,6 +26,7 @@ async def list_book_context_documents(
 ) -> list[BCDListResponse]:
     items = await list_bcds(db, book_id=book_id)
     return [BCDListResponse.model_validate(bcd) for bcd in items]
+
 
 @router.post(
     "/{book_id}",
@@ -49,6 +51,7 @@ async def create_book_context_document(
     )
     return BCDResponse.model_validate(bcd)
 
+
 @router.get("/{bcd_id}", response_model=BCDResponse, dependencies=[mm_access])
 async def get_book_context_document(
     bcd_id: str,
@@ -56,6 +59,7 @@ async def get_book_context_document(
 ) -> BCDResponse:
     bcd = await get_bcd_or_404(db, bcd_id)
     return BCDResponse.model_validate(bcd)
+
 
 @router.get(
     "/{bcd_id}/approval-status",

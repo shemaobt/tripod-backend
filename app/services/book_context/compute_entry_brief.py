@@ -15,6 +15,7 @@ def _is_before(ref: dict[str, int], target_chapter: int, target_verse: int) -> b
     v: int = ref.get("verse", 0)
     return ch < target_chapter or (ch == target_chapter and v < target_verse)
 
+
 def _slice_participants(
     register: list[dict[str, Any]] | None,
     target_chapter: int,
@@ -30,6 +31,7 @@ def _slice_participants(
         ]
         result.append({**p, "arc": sliced_arc})
     return result
+
 
 def _slice_threads(
     threads: list[dict[str, Any]] | None,
@@ -59,6 +61,7 @@ def _slice_threads(
         )
     return result
 
+
 def _filter_by_first_appears(
     items: list[dict[str, Any]] | None,
     key: str,
@@ -71,6 +74,7 @@ def _filter_by_first_appears(
         if _is_before(item.get(key, {}), target_chapter, target_verse)
     ]
 
+
 def _build_gloss_lookup(bcd: BookContextDocument) -> dict[str, str]:
 
     glosses: dict[str, str] = {}
@@ -82,6 +86,7 @@ def _build_gloss_lookup(bcd: BookContextDocument) -> dict[str, str]:
                 glosses[name] = gloss
     return glosses
 
+
 def _enrich_glosses(items: list[dict[str, Any]], glosses: dict[str, str]) -> list[dict[str, Any]]:
 
     result = []
@@ -91,6 +96,7 @@ def _enrich_glosses(items: list[dict[str, Any]], glosses: dict[str, str]) -> lis
             item = {**item, "english_gloss": glosses[name]}
         result.append(item)
     return result
+
 
 def _build_established_items(
     participants: list[dict[str, Any]],
@@ -173,6 +179,7 @@ def _build_established_items(
 
     return items
 
+
 async def _is_first_pericope(
     db: AsyncSession,
     book_id: str,
@@ -194,6 +201,7 @@ async def _is_first_pericope(
         .limit(1)
     )
     return result.scalar_one_or_none() is None
+
 
 async def compute_entry_brief(
     db: AsyncSession,

@@ -14,8 +14,10 @@ from app.services.rag.query import query as rag_query
 
 logger = logging.getLogger(__name__)
 
+
 class GenerationError(Exception):
     pass
+
 
 GENERATION_PROMPT_TEMPLATE = """\
 You are an expert biblical exegete and mapper for the "Tripod Method for AI-Assisted \
@@ -96,6 +98,7 @@ Format Example for Level 3:
 Now, generate the complete Bible Meaning Map for {reference}.
 """
 
+
 def _format_bhsa_clauses(clauses: list[dict[str, Any]]) -> str:
 
     lines: list[str] = []
@@ -123,6 +126,7 @@ def _format_bhsa_clauses(clauses: list[dict[str, Any]]) -> str:
 
         lines.append(line)
     return "\n".join(lines)
+
 
 def _format_entry_brief(entry_brief: dict[str, Any]) -> str:
     lines: list[str] = []
@@ -180,6 +184,7 @@ def _format_entry_brief(entry_brief: dict[str, Any]) -> str:
 
     return "\n".join(lines)
 
+
 def _build_generation_prompt(
     reference: str,
     bhsa_data: dict[str, Any] | None,
@@ -212,6 +217,7 @@ def _build_generation_prompt(
         )
 
     return prompt
+
 
 async def generate_meaning_map(
     reference: str,

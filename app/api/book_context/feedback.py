@@ -12,6 +12,7 @@ from app.services.book_context.resolve_feedback import resolve_feedback
 
 router = APIRouter()
 
+
 @router.post(
     "/{bcd_id}/feedback",
     response_model=BCDFeedbackResponse,
@@ -27,6 +28,7 @@ async def add_bcd_feedback(
     fb = await add_feedback(db, bcd_id, payload.section_key, user.id, payload.content)
     return BCDFeedbackResponse.model_validate(fb)
 
+
 @router.get(
     "/{bcd_id}/feedback",
     response_model=list[BCDFeedbackResponse],
@@ -38,6 +40,7 @@ async def list_bcd_feedback(
 ) -> list[BCDFeedbackResponse]:
     items = await list_feedback(db, bcd_id)
     return [BCDFeedbackResponse.model_validate(fb) for fb in items]
+
 
 @router.patch(
     "/{bcd_id}/feedback/{feedback_id}",

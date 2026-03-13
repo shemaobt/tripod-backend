@@ -1,4 +1,3 @@
-
 """
 Seed all training pipeline phases with correct dependencies into Tripod Console.
 
@@ -97,6 +96,7 @@ DEPENDENCIES = {
     "generative_training": ["conversational_tagging"],
 }
 
+
 def login(base_url: str, email: str, password: str) -> str:
     resp = requests.post(
         f"{base_url}/api/auth/login",
@@ -110,13 +110,16 @@ def login(base_url: str, email: str, password: str) -> str:
     print(f"Authenticated as {email}")
     return token
 
+
 def get_headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
 
 def fetch_existing_phases(base_url: str, headers: dict) -> list[dict]:
     resp = requests.get(f"{base_url}/api/phases", headers=headers, timeout=15)
     resp.raise_for_status()
     return resp.json()
+
 
 def delete_phase(base_url: str, headers: dict, phase_id: str, name: str):
     resp = requests.delete(f"{base_url}/api/phases/{phase_id}", headers=headers, timeout=15)
@@ -124,6 +127,7 @@ def delete_phase(base_url: str, headers: dict, phase_id: str, name: str):
         print(f"  Deleted: {name}")
     else:
         print(f"  Failed to delete {name} ({resp.status_code}): {resp.text}")
+
 
 def create_phase(base_url: str, headers: dict, name: str, description: str) -> str | None:
     resp = requests.post(
@@ -140,6 +144,7 @@ def create_phase(base_url: str, headers: dict, name: str, description: str) -> s
         print(f"  Failed to create {name} ({resp.status_code}): {resp.text}")
         return None
 
+
 def add_dependency(base_url: str, headers: dict, phase_id: str, depends_on_id: str, label: str):
     resp = requests.post(
         f"{base_url}/api/phases/{phase_id}/dependencies",
@@ -151,6 +156,7 @@ def add_dependency(base_url: str, headers: dict, phase_id: str, depends_on_id: s
         print(f"  Linked: {label}")
     else:
         print(f"  Failed to link {label} ({resp.status_code}): {resp.text}")
+
 
 def dry_run():
     print("\n=== DRY RUN — Phases to create ===\n")
@@ -172,6 +178,7 @@ def dry_run():
     print()
     total_edges = sum(len(v) for v in DEPENDENCIES.values())
     print(f"Total: {len(PHASES)} phases, {total_edges} dependency edges")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -252,6 +259,7 @@ def main():
             dep_count += 1
 
     print(f"\n--- Done! Created/verified {len(key_to_id)} phases with {dep_count} dependencies ---")
+
 
 if __name__ == "__main__":
     main()

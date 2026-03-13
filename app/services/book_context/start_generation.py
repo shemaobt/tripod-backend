@@ -19,8 +19,10 @@ class GenerationTarget:
     chapter_count: int
     user_feedback: str | None = None
 
+
 class GenerationAlreadyInProgress(Exception):
     pass
+
 
 async def start_generation(
     db: AsyncSession, bcd_id: str, user_id: str, user_feedback: str | None = None

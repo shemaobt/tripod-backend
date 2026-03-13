@@ -12,6 +12,7 @@ from app.services import meaning_map_service
 
 router = APIRouter()
 
+
 @router.get("/{map_id}/export/json", dependencies=[mm_access])
 async def export_json(
     map_id: str,
@@ -23,6 +24,7 @@ async def export_json(
         raise AuthorizationError("Only approved meaning maps can be exported")
     content = meaning_map_service.export_json(mm)
     return PlainTextResponse(content, media_type="application/json")
+
 
 @router.get("/{map_id}/export/prose", dependencies=[mm_access])
 async def export_prose(

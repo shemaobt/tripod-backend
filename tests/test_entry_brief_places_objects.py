@@ -1,4 +1,3 @@
-
 import pytest
 
 from app.services.book_context.compute_entry_brief import (
@@ -72,6 +71,7 @@ SAMPLE_BCD_DATA = {
     ],
 }
 
+
 def test_build_established_items_includes_places():
     items = _build_established_items(
         participants=[],
@@ -92,6 +92,7 @@ def test_build_established_items_includes_places():
     assert place_items[0].english_gloss == "House of Bread"
     assert place_items[0].description == "hometown"
 
+
 def test_build_established_items_includes_objects():
     items = _build_established_items(
         participants=[],
@@ -109,6 +110,7 @@ def test_build_established_items_includes_objects():
     assert len(obj_items) == 1
     assert obj_items[0].name == "grain"
     assert obj_items[0].description == "harvested barley"
+
 
 def test_build_established_items_all_categories():
     items = _build_established_items(
@@ -138,6 +140,7 @@ def test_build_established_items_all_categories():
     )
     categories = {i.category for i in items}
     assert categories == {"participant", "event", "institution", "place", "object"}
+
 
 @pytest.mark.asyncio
 async def test_entry_brief_places_in_established_items(db_session):
@@ -179,6 +182,7 @@ async def test_entry_brief_places_in_established_items(db_session):
 
     assert "Boaz's field" not in place_names
 
+
 @pytest.mark.asyncio
 async def test_entry_brief_objects_in_established_items(db_session):
     user = await make_user(db_session, email="eb_objects@test.com")
@@ -217,6 +221,7 @@ async def test_entry_brief_objects_in_established_items(db_session):
 
     assert "sandal" not in obj_names
 
+
 def test_format_entry_brief_includes_places():
     brief = {
         "established_items": [],
@@ -237,6 +242,7 @@ def test_format_entry_brief_includes_places():
     assert "Bethlehem (House of Bread)" in result
     assert "home" in result
 
+
 def test_format_entry_brief_includes_objects():
     brief = {
         "established_items": [],
@@ -253,6 +259,7 @@ def test_format_entry_brief_includes_objects():
     assert "grain" in result
     assert "harvested barley" in result
 
+
 def test_format_entry_brief_includes_institutions():
     brief = {
         "established_items": [],
@@ -267,6 +274,7 @@ def test_format_entry_brief_includes_institutions():
     result = _format_entry_brief(brief)
     assert "Known Institutions at Entry" in result
     assert "gleaning rights" in result
+
 
 def test_format_entry_brief_includes_english_gloss():
     brief = {
@@ -284,6 +292,7 @@ def test_format_entry_brief_includes_english_gloss():
     }
     result = _format_entry_brief(brief)
     assert "Naomi (Pleasant)" in result
+
 
 def test_format_entry_brief_no_gloss():
     brief = {

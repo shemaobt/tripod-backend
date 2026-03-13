@@ -74,6 +74,7 @@ async def get_genre_stats(db: AsyncSession, project_id: str) -> GenreStatsRespon
         subcategories=subcategories,
     )
 
+
 async def get_admin_stats(db: AsyncSession) -> AdminStatsResponse:
 
     project_count_stmt = select(func.count(func.distinct(OC_Recording.project_id)))

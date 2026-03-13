@@ -9,6 +9,7 @@ from app.utils.jwt import create_token
 
 settings = get_settings()
 
+
 async def issue_tokens(db: AsyncSession, user: User) -> tuple[str, str]:
 
     access_token = create_token(user.id, "access", settings.access_token_expire_minutes)

@@ -8,6 +8,7 @@ _PERSON_TYPES = frozenset({"pers", "ppde", "pers,gens", "pers,god"})
 _PLACE_TYPES = frozenset({"topo", "gens,topo"})
 _SKIP_TYPES = frozenset({"mens"})
 
+
 def _classify_nametype(nametype: str) -> str:
 
     if nametype in _PERSON_TYPES:
@@ -22,6 +23,7 @@ def _classify_nametype(nametype: str) -> str:
     if "topo" in nametype:
         return "place"
     return "ambiguous"
+
 
 def extract_bhsa_entities(tf_api: Any, book_name: str, chapter_count: int) -> dict[str, Any]:
 

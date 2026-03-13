@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 MAX_RETRIES = 3
 RETRY_BASE_DELAY = 2
 
+
 async def call_llm(
     prompt: str,
     *,

@@ -22,7 +22,6 @@ async def main():
         ).scalar_one_or_none()
 
         if not project:
-
             from app.db.models.language import Language
 
             lang = (await db.execute(select(Language))).scalars().first()
@@ -52,6 +51,7 @@ async def main():
 
         await db.commit()
         print(f"Created/found project '{project_name}' and granted access to {email}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

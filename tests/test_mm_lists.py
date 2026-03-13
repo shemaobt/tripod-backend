@@ -22,6 +22,7 @@ async def test_list_books_empty(db_session) -> None:
     result = await list_books(db_session)
     assert result == []
 
+
 @pytest.mark.asyncio
 async def test_list_books_ordered(db_session) -> None:
     await make_bible_book(db_session, name="Exodus", abbreviation="Exod", order=2)
@@ -30,6 +31,7 @@ async def test_list_books_ordered(db_session) -> None:
     assert len(result) == 2
     assert result[0].name == "Genesis"
     assert result[1].name == "Exodus"
+
 
 @pytest.mark.asyncio
 async def test_list_meaning_maps_no_filters(db_session) -> None:
@@ -41,6 +43,7 @@ async def test_list_meaning_maps_no_filters(db_session) -> None:
     await make_meaning_map(db_session, p2.id, user.id)
     result = await list_meaning_maps(db_session)
     assert len(result) == 2
+
 
 @pytest.mark.asyncio
 async def test_list_meaning_maps_filter_by_book(db_session) -> None:
@@ -54,6 +57,7 @@ async def test_list_meaning_maps_filter_by_book(db_session) -> None:
     result = await list_meaning_maps(db_session, book_id=book1.id)
     assert len(result) == 1
 
+
 @pytest.mark.asyncio
 async def test_list_meaning_maps_filter_by_chapter(db_session) -> None:
     user = await make_user(db_session, email="analyst7@test.com")
@@ -64,6 +68,7 @@ async def test_list_meaning_maps_filter_by_chapter(db_session) -> None:
     await make_meaning_map(db_session, p2.id, user.id)
     result = await list_meaning_maps(db_session, chapter=1)
     assert len(result) == 1
+
 
 @pytest.mark.asyncio
 async def test_list_meaning_maps_filter_by_status(db_session) -> None:
@@ -77,10 +82,12 @@ async def test_list_meaning_maps_filter_by_status(db_session) -> None:
     assert len(result) == 1
     assert result[0].status == "draft"
 
+
 @pytest.mark.asyncio
 async def test_list_meaning_maps_empty(db_session) -> None:
     result = await list_meaning_maps(db_session)
     assert result == []
+
 
 @pytest.mark.asyncio
 async def test_list_feedback_returns_ordered(db_session) -> None:
@@ -100,6 +107,7 @@ async def test_list_feedback_returns_ordered(db_session) -> None:
     assert result[0].content == "First"
     assert result[1].content == "Second"
 
+
 @pytest.mark.asyncio
 async def test_list_feedback_empty(db_session) -> None:
     user = await make_user(db_session, email="analyst10@test.com")
@@ -109,6 +117,7 @@ async def test_list_feedback_empty(db_session) -> None:
     result = await list_feedback(db_session, mm.id)
     assert result == []
 
+
 @pytest.mark.asyncio
 async def test_list_pericopes_returns_all_for_book(db_session) -> None:
     book = await make_bible_book(db_session)
@@ -116,6 +125,7 @@ async def test_list_pericopes_returns_all_for_book(db_session) -> None:
     await make_pericope(db_session, book.id, chapter_start=2, reference="Gen 2:1-5")
     result = await list_pericopes(db_session, book.id)
     assert len(result) == 2
+
 
 @pytest.mark.asyncio
 async def test_list_pericopes_filter_by_chapter(db_session) -> None:
@@ -125,6 +135,7 @@ async def test_list_pericopes_filter_by_chapter(db_session) -> None:
     result = await list_pericopes(db_session, book.id, chapter=1)
     assert len(result) == 1
     assert result[0].reference == "Gen 1:1-5"
+
 
 @pytest.mark.asyncio
 async def test_list_pericopes_includes_meaning_map_info(db_session) -> None:
@@ -137,6 +148,7 @@ async def test_list_pericopes_includes_meaning_map_info(db_session) -> None:
     assert result[0].meaning_map_id == mm.id
     assert result[0].status == "draft"
 
+
 @pytest.mark.asyncio
 async def test_list_pericopes_without_meaning_map(db_session) -> None:
     book = await make_bible_book(db_session)
@@ -145,11 +157,13 @@ async def test_list_pericopes_without_meaning_map(db_session) -> None:
     assert len(result) == 1
     assert result[0].meaning_map_id is None
 
+
 @pytest.mark.asyncio
 async def test_get_chapter_summaries_empty(db_session) -> None:
     book = await make_bible_book(db_session)
     result = await get_chapter_summaries(db_session, book.id)
     assert result == []
+
 
 @pytest.mark.asyncio
 async def test_get_chapter_summaries_counts_statuses(db_session) -> None:
@@ -171,6 +185,7 @@ async def test_get_chapter_summaries_counts_statuses(db_session) -> None:
     assert result[0].cross_check_count == 1
     assert result[0].approved_count == 0
 
+
 @pytest.mark.asyncio
 async def test_get_chapter_summaries_multi_chapter_pericope(db_session) -> None:
     user = await make_user(db_session, email="analyst41@test.com")
@@ -186,6 +201,7 @@ async def test_get_chapter_summaries_multi_chapter_pericope(db_session) -> None:
     assert result[1].chapter == 2
     assert result[1].pericope_count == 1
 
+
 @pytest.mark.asyncio
 async def test_get_chapter_summaries_pericope_without_map(db_session) -> None:
     book = await make_bible_book(db_session)
@@ -194,6 +210,7 @@ async def test_get_chapter_summaries_pericope_without_map(db_session) -> None:
     assert len(result) == 1
     assert result[0].pericope_count == 1
     assert result[0].draft_count == 0
+
 
 @pytest.mark.asyncio
 async def test_get_chapter_summaries_approved_count(db_session) -> None:
@@ -208,6 +225,7 @@ async def test_get_chapter_summaries_approved_count(db_session) -> None:
     assert result[0].chapter == 5
     assert result[0].approved_count == 1
 
+
 @pytest.mark.asyncio
 async def test_get_map_with_book_success(db_session) -> None:
     user = await make_user(db_session, email="join1@test.com")
@@ -219,10 +237,12 @@ async def test_get_map_with_book_success(db_session) -> None:
     assert found_book.id == book.id
     assert found_book.name == "Genesis"
 
+
 @pytest.mark.asyncio
 async def test_get_map_with_book_raises_not_found(db_session) -> None:
     with pytest.raises(NotFoundError, match=r"Meaning map .* not found"):
         await get_map_with_book(db_session, "nonexistent-id")
+
 
 @pytest.mark.asyncio
 async def test_get_pericope_with_book_success(db_session) -> None:
@@ -232,6 +252,7 @@ async def test_get_pericope_with_book_success(db_session) -> None:
     assert found_pericope.id == pericope.id
     assert found_book.id == book.id
     assert found_book.name == "Genesis"
+
 
 @pytest.mark.asyncio
 async def test_get_pericope_with_book_raises_not_found(db_session) -> None:

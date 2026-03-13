@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 _client: AsyncQdrantClient | None = None
 
+
 async def init_qdrant() -> None:
     global _client
     settings = get_settings()
@@ -48,11 +49,13 @@ async def init_qdrant() -> None:
         )
         _client = None
 
+
 def get_qdrant_client() -> AsyncQdrantClient:
 
     if _client is None:
         raise RuntimeError("Qdrant client not initialised — call init_qdrant() first")
     return _client
+
 
 async def close_qdrant() -> None:
 

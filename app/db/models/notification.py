@@ -9,7 +9,6 @@ from app.core.database import Base
 
 
 class Notification(Base):
-
     __tablename__ = "notifications"
     __table_args__ = (
         Index(
@@ -33,8 +32,8 @@ class Notification(Base):
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-class NotificationMeaningMapDetail(Base):
 
+class NotificationMeaningMapDetail(Base):
     __tablename__ = "notification_meaning_map_details"
 
     notification_id: Mapped[str] = mapped_column(

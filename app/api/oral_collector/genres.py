@@ -17,6 +17,7 @@ from app.services.oral_collector import genre_service
 genres_router = APIRouter()
 subcategories_router = APIRouter()
 
+
 @genres_router.get("", response_model=list[GenreResponse])
 async def list_genres(
     _: User = Depends(get_current_user),
@@ -25,6 +26,7 @@ async def list_genres(
 
     genres = await genre_service.list_genres(db)
     return [GenreResponse.model_validate(g) for g in genres]
+
 
 @genres_router.post(
     "",
@@ -40,6 +42,7 @@ async def create_genre(
     genre = await genre_service.create_genre(db, payload)
     return GenreResponse.model_validate(genre)
 
+
 @genres_router.patch("/{genre_id}", response_model=GenreResponse)
 async def update_genre(
     genre_id: str,
@@ -51,6 +54,7 @@ async def update_genre(
     genre = await genre_service.update_genre(db, genre_id, payload)
     return GenreResponse.model_validate(genre)
 
+
 @genres_router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_genre(
     genre_id: str,
@@ -59,6 +63,7 @@ async def delete_genre(
 ) -> None:
 
     await genre_service.delete_genre(db, genre_id)
+
 
 @genres_router.post(
     "/{genre_id}/subcategories",
@@ -75,6 +80,7 @@ async def create_subcategory(
     subcategory = await genre_service.create_subcategory(db, genre_id, payload)
     return SubcategoryResponse.model_validate(subcategory)
 
+
 @subcategories_router.patch("/{subcategory_id}", response_model=SubcategoryResponse)
 async def update_subcategory(
     subcategory_id: str,
@@ -85,6 +91,7 @@ async def update_subcategory(
 
     subcategory = await genre_service.update_subcategory(db, subcategory_id, payload)
     return SubcategoryResponse.model_validate(subcategory)
+
 
 @subcategories_router.delete("/{subcategory_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_subcategory(

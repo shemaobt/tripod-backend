@@ -23,6 +23,7 @@ FORMAT_EXTENSIONS: dict[str, str] = {
 
 SIGNED_URL_EXPIRY_MINUTES = 15
 
+
 async def list_recordings(
     db: AsyncSession,
     project_id: str,
@@ -48,7 +49,6 @@ async def list_recordings(
     if upload_status:
         stmt = stmt.where(OC_Recording.upload_status == upload_status)
     else:
-
         stmt = stmt.where(OC_Recording.upload_status == "uploaded")
     if cleaning_status:
         stmt = stmt.where(OC_Recording.cleaning_status == cleaning_status)
@@ -58,6 +58,7 @@ async def list_recordings(
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
+
 async def get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
 
     stmt = select(OC_Recording).where(OC_Recording.id == recording_id)
@@ -66,6 +67,7 @@ async def get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
     if not recording:
         raise NotFoundError("Recording not found")
     return recording
+
 
 async def check_recording_access(db: AsyncSession, recording: OC_Recording, user_id: str) -> None:
 
@@ -81,6 +83,7 @@ async def check_recording_access(db: AsyncSession, recording: OC_Recording, user
         raise AuthorizationError(
             "Only the recording owner or a project manager can modify this recording"
         )
+
 
 async def create_recording(db: AsyncSession, data: RecordingCreate, user_id: str) -> OC_Recording:
 
@@ -100,6 +103,7 @@ async def create_recording(db: AsyncSession, data: RecordingCreate, user_id: str
     await db.refresh(recording)
     return recording
 
+
 async def update_recording(
     db: AsyncSession, recording_id: str, data: RecordingUpdate
 ) -> OC_Recording:
@@ -112,6 +116,7 @@ async def update_recording(
     await db.refresh(recording)
     return recording
 
+
 async def delete_recording(db: AsyncSession, recording_id: str) -> None:
 
     recording = await get_recording(db, recording_id)
@@ -120,10 +125,12 @@ async def delete_recording(db: AsyncSession, recording_id: str) -> None:
     await db.delete(recording)
     await db.commit()
 
+
 def _gcs_blob_path(project_id: str, genre_id: str, recording_id: str, fmt: str) -> str:
 
     ext = FORMAT_EXTENSIONS.get(fmt.lower(), f".{fmt.lower()}")
     return f"oral-collector/{project_id}/{genre_id}/{recording_id}{ext}"
+
 
 async def generate_upload_url(
     db: AsyncSession,
@@ -160,6 +167,7 @@ async def generate_upload_url(
         expires_at=expires_at,
     )
 
+
 async def confirm_upload(db: AsyncSession, recording_id: str) -> OC_Recording:
 
     recording = await get_recording(db, recording_id)
@@ -178,6 +186,7 @@ async def confirm_upload(db: AsyncSession, recording_id: str) -> OC_Recording:
     await db.commit()
     await db.refresh(recording)
     return recording
+
 
 def _delete_gcs_blob(gcs_url: str) -> None:
 

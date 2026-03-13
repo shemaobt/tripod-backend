@@ -17,6 +17,7 @@ async def get_user_project_role(db: AsyncSession, user_id: str, project_id: str)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
+
 async def list_user_projects(db: AsyncSession, user_id: str) -> list[Project]:
 
     direct_project_ids = select(ProjectUserAccess.project_id).where(
@@ -42,11 +43,13 @@ async def list_user_projects(db: AsyncSession, user_id: str) -> list[Project]:
     result = await db.execute(stmt)
     return list(result.scalars().unique().all())
 
+
 async def list_all_projects(db: AsyncSession) -> list[Project]:
 
     stmt = select(Project).order_by(Project.name)
     result = await db.execute(stmt)
     return list(result.scalars().unique().all())
+
 
 async def get_project_members(db: AsyncSession, project_id: str) -> list[ProjectUserAccess]:
 
@@ -57,6 +60,7 @@ async def get_project_members(db: AsyncSession, project_id: str) -> list[Project
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
 
 async def add_member(
     db: AsyncSession,
@@ -85,6 +89,7 @@ async def add_member(
     await db.refresh(member)
     return member
 
+
 async def remove_member(db: AsyncSession, project_id: str, user_id: str) -> None:
 
     stmt = select(ProjectUserAccess).where(
@@ -98,6 +103,7 @@ async def remove_member(db: AsyncSession, project_id: str, user_id: str) -> None
 
     await db.delete(member)
     await db.commit()
+
 
 async def get_project_stats(db: AsyncSession, project_id: str) -> OCProjectStatsResponse:
 

@@ -25,7 +25,6 @@ async def main() -> None:
     args = parser.parse_args()
 
     async with AsyncSessionLocal() as db:
-
         user = (await db.execute(select(User).where(User.email == args.email))).scalar_one_or_none()
         if not user:
             print(f"Error: User with email '{args.email}' not found.")
@@ -70,6 +69,7 @@ async def main() -> None:
             )
 
         await db.commit()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

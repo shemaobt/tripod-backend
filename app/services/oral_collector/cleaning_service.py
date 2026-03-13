@@ -13,6 +13,7 @@ from app.services.oral_collector.require_manager import require_project_manager
 
 logger = logging.getLogger(__name__)
 
+
 async def _get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
 
     stmt = select(OC_Recording).where(OC_Recording.id == recording_id)
@@ -21,6 +22,7 @@ async def _get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
     if not recording:
         raise NotFoundError("Recording not found")
     return recording
+
 
 async def _copy_gcs_blob(source_name: str, dest_name: str) -> None:
 
@@ -31,6 +33,7 @@ async def _copy_gcs_blob(source_name: str, dest_name: str) -> None:
     source_blob = bucket.blob(source_name)
     bucket.copy_blob(source_blob, bucket, dest_name)
 
+
 def _blob_name_from_url(gcs_url: str) -> str | None:
 
     prefix = f"https://storage.googleapis.com/{GCS_OC_BUCKET}/"
@@ -38,12 +41,14 @@ def _blob_name_from_url(gcs_url: str) -> str | None:
         return None
     return gcs_url[len(prefix) :]
 
+
 def _original_blob_name(blob_name: str) -> str:
 
     dot_idx = blob_name.rfind(".")
     if dot_idx == -1:
         return f"{blob_name}_original"
     return f"{blob_name[:dot_idx]}_original{blob_name[dot_idx:]}"
+
 
 async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) -> OC_Recording:
 
@@ -62,7 +67,6 @@ async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) ->
     settings = get_settings()
 
     try:
-
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 settings.cleaning_api_url,
@@ -101,6 +105,7 @@ async def trigger_cleaning(db: AsyncSession, recording_id: str, user_id: str) ->
         await db.refresh(recording)
 
     return recording
+
 
 async def get_cleaning_status(db: AsyncSession, recording_id: str) -> OC_Recording:
 

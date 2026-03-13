@@ -72,6 +72,7 @@ For each: name, first_invoked (chapter/verse), what_it_is, role_in_book, appears
 - known_limitations: List of known limitations or areas that may need human review
 """
 
+
 async def generate_context_sections(state: BCDGenerationState) -> dict[str, Any]:
     bhsa_entities = state.get("bhsa_entities", [])
 

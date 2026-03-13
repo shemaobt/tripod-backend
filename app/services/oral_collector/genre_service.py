@@ -23,6 +23,7 @@ async def list_genres(db: AsyncSession) -> list[OC_Genre]:
     result = await db.execute(stmt)
     return list(result.scalars().unique().all())
 
+
 async def get_genre(db: AsyncSession, genre_id: str) -> OC_Genre:
 
     stmt = (
@@ -35,6 +36,7 @@ async def get_genre(db: AsyncSession, genre_id: str) -> OC_Genre:
     if not genre:
         raise NotFoundError("Genre not found")
     return genre
+
 
 async def create_genre(db: AsyncSession, data: GenreCreate) -> OC_Genre:
 
@@ -50,6 +52,7 @@ async def create_genre(db: AsyncSession, data: GenreCreate) -> OC_Genre:
     await db.refresh(genre, attribute_names=["subcategories"])
     return genre
 
+
 async def update_genre(db: AsyncSession, genre_id: str, data: GenreUpdate) -> OC_Genre:
 
     genre = await get_genre(db, genre_id)
@@ -60,11 +63,13 @@ async def update_genre(db: AsyncSession, genre_id: str, data: GenreUpdate) -> OC
     await db.refresh(genre, attribute_names=["subcategories"])
     return genre
 
+
 async def delete_genre(db: AsyncSession, genre_id: str) -> None:
 
     genre = await get_genre(db, genre_id)
     genre.is_active = False
     await db.commit()
+
 
 async def _get_subcategory(db: AsyncSession, subcategory_id: str) -> OC_Subcategory:
 
@@ -74,6 +79,7 @@ async def _get_subcategory(db: AsyncSession, subcategory_id: str) -> OC_Subcateg
     if not subcategory:
         raise NotFoundError("Subcategory not found")
     return subcategory
+
 
 async def create_subcategory(
     db: AsyncSession, genre_id: str, data: SubcategoryCreate
@@ -91,6 +97,7 @@ async def create_subcategory(
     await db.refresh(subcategory)
     return subcategory
 
+
 async def update_subcategory(
     db: AsyncSession, subcategory_id: str, data: SubcategoryUpdate
 ) -> OC_Subcategory:
@@ -102,6 +109,7 @@ async def update_subcategory(
     await db.commit()
     await db.refresh(subcategory)
     return subcategory
+
 
 async def delete_subcategory(db: AsyncSession, subcategory_id: str) -> None:
 

@@ -9,6 +9,7 @@ from app.services.oral_collector import stats_service
 
 stats_router = APIRouter()
 
+
 @stats_router.get(
     "/projects/{project_id}/genre-stats",
     response_model=GenreStatsResponse,
@@ -20,6 +21,7 @@ async def get_genre_stats(
 ) -> GenreStatsResponse:
 
     return await stats_service.get_genre_stats(db, project_id)
+
 
 @stats_router.get(
     "/admin/stats",

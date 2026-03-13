@@ -21,12 +21,14 @@ from app.services.oral_collector.recording_service import (
 
 logger = logging.getLogger(__name__)
 
+
 async def _download_audio(gcs_url: str) -> bytes:
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(gcs_url, timeout=120.0)
         resp.raise_for_status()
         return resp.content
+
 
 async def _ffmpeg_split_segment(
     input_path: Path, output_path: Path, start: float, end: float
@@ -55,6 +57,7 @@ async def _ffmpeg_split_segment(
     if proc.returncode != 0:
         raise RuntimeError(f"FFmpeg failed: {stderr.decode()}")
 
+
 def _content_type_for_format(fmt: str) -> str:
 
     mapping = {
@@ -66,6 +69,7 @@ def _content_type_for_format(fmt: str) -> str:
         "webm": "audio/webm",
     }
     return mapping.get(fmt.lower(), "application/octet-stream")
+
 
 async def split_recording(
     db: AsyncSession,

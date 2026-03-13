@@ -42,6 +42,7 @@ async def create_invite(
     await db.refresh(invite)
     return invite
 
+
 async def list_user_invites(db: AsyncSession, user_email: str) -> list[ProjectInvite]:
 
     stmt = (
@@ -54,6 +55,7 @@ async def list_user_invites(db: AsyncSession, user_email: str) -> list[ProjectIn
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
 
 async def accept_invite(
     db: AsyncSession, invite_id: str, user_id: str, user_email: str
@@ -75,6 +77,7 @@ async def accept_invite(
     await db.refresh(invite)
     return invite
 
+
 async def decline_invite(db: AsyncSession, invite_id: str, user_email: str) -> ProjectInvite:
 
     invite = await _get_invite_for_user(db, invite_id, user_email)
@@ -83,6 +86,7 @@ async def decline_invite(db: AsyncSession, invite_id: str, user_email: str) -> P
     await db.commit()
     await db.refresh(invite)
     return invite
+
 
 async def _get_invite_for_user(db: AsyncSession, invite_id: str, user_email: str) -> ProjectInvite:
 

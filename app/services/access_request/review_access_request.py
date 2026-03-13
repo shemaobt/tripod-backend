@@ -34,7 +34,6 @@ async def review_access_request(
     request.review_reason = reason
 
     if status == "approved":
-
         app_stmt: Select[tuple[App]] = select(App).where(App.id == request.app_id)
         app_result = await db.execute(app_stmt)
         app = app_result.scalar_one()

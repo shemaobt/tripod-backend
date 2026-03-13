@@ -12,6 +12,7 @@ from app.utils.jwt import create_token, decode_token
 
 settings = get_settings()
 
+
 async def refresh_access_token(db: AsyncSession, refresh_token: str) -> str:
 
     payload = decode_token(refresh_token)

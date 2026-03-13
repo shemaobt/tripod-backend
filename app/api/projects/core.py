@@ -15,6 +15,7 @@ from app.services import project_service
 
 router = APIRouter()
 
+
 @router.get("", response_model=list[ProjectResponse])
 async def list_projects(
     language_id: str | None = Query(default=None),
@@ -28,6 +29,7 @@ async def list_projects(
     if language_id is not None:
         projects = [p for p in projects if p.language_id == language_id]
     return [ProjectResponse.model_validate(p) for p in projects]
+
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
@@ -47,6 +49,7 @@ async def create_project(
     )
     return ProjectResponse.model_validate(project)
 
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
@@ -56,6 +59,7 @@ async def get_project(
     project = await project_service.get_project_or_404(db, project_id)
     await assert_project_access(db, user, project_id)
     return ProjectResponse.model_validate(project)
+
 
 @router.patch("/{project_id}", response_model=ProjectResponse)
 async def update_project(
@@ -73,6 +77,7 @@ async def update_project(
         language_id=payload.language_id,
     )
     return ProjectResponse.model_validate(project)
+
 
 @router.patch("/{project_id}/location", response_model=ProjectResponse)
 async def update_project_location(

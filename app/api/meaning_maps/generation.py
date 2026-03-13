@@ -19,8 +19,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 async def _enrich(db: AsyncSession, mm: MeaningMapModel) -> MeaningMapResponse:
     return await meaning_map_service.enrich_meaning_map(db, mm)
+
 
 @router.post(
     "/generate",

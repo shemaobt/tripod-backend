@@ -8,6 +8,7 @@ from app.services.book_context.get_bcd import get_bcd_or_404
 SPECIALIST_ROLES = {"exegete", "biblical_language_specialist", "translation_specialist"}
 APPROVE_CAPABLE = {"admin", *SPECIALIST_ROLES}
 
+
 async def approve_bcd(
     db: AsyncSession,
     bcd_id: str,

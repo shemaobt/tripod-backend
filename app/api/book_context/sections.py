@@ -10,6 +10,7 @@ from app.services.book_context.update_section import update_section
 
 router = APIRouter()
 
+
 @router.patch(
     "/{bcd_id}/sections/{section_key}",
     response_model=BCDResponse,

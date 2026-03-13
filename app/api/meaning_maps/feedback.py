@@ -12,6 +12,7 @@ from app.services.notifications.get_mm_app_id import get_mm_app_id
 
 router = APIRouter()
 
+
 @router.post(
     "/{map_id}/feedback",
     response_model=FeedbackResponse,
@@ -36,6 +37,7 @@ async def add_feedback(
     resp.author_name = user.display_name
     return resp
 
+
 @router.get("/{map_id}/feedback", response_model=list[FeedbackResponse], dependencies=[mm_access])
 async def list_feedback(
     map_id: str,
@@ -44,6 +46,7 @@ async def list_feedback(
 ) -> list[FeedbackResponse]:
     items = await meaning_map_service.list_feedback(db, map_id)
     return [FeedbackResponse.model_validate(fb) for fb in items]
+
 
 @router.patch(
     "/{map_id}/feedback/{feedback_id}",

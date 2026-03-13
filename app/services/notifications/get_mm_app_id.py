@@ -5,6 +5,7 @@ from app.db.models.auth import App
 
 MM_APP_KEY = "meaning-map-generator"
 
+
 async def get_mm_app_id(db: AsyncSession) -> str:
 
     stmt = select(App.id).where(App.app_key == MM_APP_KEY)

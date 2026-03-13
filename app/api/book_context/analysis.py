@@ -15,6 +15,7 @@ from app.services.meaning_map.get_meaning_map_or_404 import get_meaning_map_or_4
 
 router = APIRouter()
 
+
 @router.get(
     "/entry-brief/{pericope_id}",
     response_model=PassageEntryBriefResponse,
@@ -25,6 +26,7 @@ async def get_entry_brief(
     db: AsyncSession = Depends(get_db),
 ) -> PassageEntryBriefResponse:
     return await compute_entry_brief(db, pericope_id)
+
 
 @router.get(
     "/staleness-check/{meaning_map_id}",
@@ -37,6 +39,7 @@ async def check_staleness(
 ) -> StalenessCheckResponse:
     mm = await get_meaning_map_or_404(db, meaning_map_id)
     return await check_bcd_staleness(db, mm)
+
 
 @router.get(
     "/validate/{meaning_map_id}",

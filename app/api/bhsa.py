@@ -5,6 +5,7 @@ from app.services.bhsa import loader
 
 router = APIRouter()
 
+
 @router.get("/status", response_model=BHSAStatusResponse)
 async def get_bhsa_status() -> BHSAStatusResponse | Response:
     bhsa_status = loader.get_status()
@@ -29,6 +30,7 @@ async def get_bhsa_status() -> BHSAStatusResponse | Response:
         media_type="application/json",
     )
 
+
 @router.post("/load", response_model=BHSALoadResponse)
 async def load_bhsa_data(background_tasks: BackgroundTasks) -> BHSALoadResponse:
     bhsa_status = loader.get_status()
@@ -42,6 +44,7 @@ async def load_bhsa_data(background_tasks: BackgroundTasks) -> BHSALoadResponse:
         status="loading_started",
         message="BHSA data loading started in background",
     )
+
 
 @router.get("/passage", response_model=PassageResponse)
 async def fetch_passage(ref: str) -> PassageResponse:
@@ -69,6 +72,7 @@ async def fetch_passage(ref: str) -> PassageResponse:
         source_lang=data["source_lang"],
         clauses=[ClauseData(**c) for c in data["clauses"]],
     )
+
 
 @router.get("/books/{book_name}/verse-counts")
 async def get_verse_counts(book_name: str) -> dict[str, int]:

@@ -48,6 +48,7 @@ def _load_bhsa_background() -> None:
     except Exception as e:
         print(f"[STARTUP] Failed to load BHSA data: {e}", flush=True)
 
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     setup_logging()
@@ -63,6 +64,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     finally:
         await close_qdrant()
         await close_db()
+
 
 def create_app() -> FastAPI:
     settings = get_settings()
@@ -134,5 +136,6 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     return app
+
 
 app = create_app()

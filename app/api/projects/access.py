@@ -17,6 +17,7 @@ from app.services import project_service
 
 router = APIRouter()
 
+
 @router.post(
     "/{project_id}/access/users",
     response_model=ProjectUserAccessResponse,
@@ -32,6 +33,7 @@ async def grant_user_access(
     await project_service.get_project_or_404(db, project_id)
     access = await project_service.grant_user_access(db, project_id, payload.user_id)
     return ProjectUserAccessResponse.model_validate(access)
+
 
 @router.post(
     "/{project_id}/access/organizations",
@@ -50,6 +52,7 @@ async def grant_organization_access(
         db, project_id, payload.organization_id
     )
     return ProjectOrganizationAccessResponse.model_validate(access)
+
 
 @router.get(
     "/{project_id}/access/users",
@@ -77,6 +80,7 @@ async def list_user_access(
         for access, user in rows
     ]
 
+
 @router.get(
     "/{project_id}/access/organizations",
     response_model=list[ProjectOrganizationAccessDetailResponse],
@@ -101,6 +105,7 @@ async def list_organization_access(
         for access, org in rows
     ]
 
+
 @router.delete(
     "/{project_id}/access/users/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -113,6 +118,7 @@ async def revoke_user_access(
 ) -> None:
     await assert_project_access(db, actor, project_id)
     await project_service.revoke_user_access(db, project_id, user_id)
+
 
 @router.delete(
     "/{project_id}/access/organizations/{organization_id}",

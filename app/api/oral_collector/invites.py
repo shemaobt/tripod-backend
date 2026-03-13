@@ -10,11 +10,13 @@ from app.services.oral_collector.require_manager import require_project_manager
 
 invites_router = APIRouter()
 
+
 async def _require_manager(project_id: str, user: User, db: AsyncSession) -> None:
 
     if user.is_platform_admin:
         return
     await require_project_manager(db, project_id, user.id, action="manage invites")
+
 
 @invites_router.post(
     "/projects/{project_id}/invites",
@@ -34,6 +36,7 @@ async def create_invite(
     )
     return OCProjectInviteResponse.model_validate(invite)
 
+
 @invites_router.get(
     "/invites/mine",
     response_model=list[OCProjectInviteResponse],
@@ -45,6 +48,7 @@ async def list_my_invites(
 
     invites = await invite_service.list_user_invites(db, user.email)
     return [OCProjectInviteResponse.model_validate(i) for i in invites]
+
 
 @invites_router.post(
     "/invites/{invite_id}/accept",
@@ -58,6 +62,7 @@ async def accept_invite(
 
     invite = await invite_service.accept_invite(db, invite_id, user.id, user.email)
     return OCProjectInviteResponse.model_validate(invite)
+
 
 @invites_router.post(
     "/invites/{invite_id}/decline",

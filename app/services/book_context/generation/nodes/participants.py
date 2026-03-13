@@ -53,6 +53,7 @@ and appearance_count MUST be copied exactly — these are static fields.
 what_audience_knows_at_entry, arc, and status_at_end.
 """
 
+
 async def generate_participants(state: BCDGenerationState) -> dict[str, list[dict[str, Any]]]:
     bhsa_entities = state.get("bhsa_entities", [])
 
