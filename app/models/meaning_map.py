@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -105,13 +106,13 @@ class PericopeWithStatusResponse(PericopeResponse):
 
 class MeaningMapCreate(BaseModel):
     pericope_id: str
-    data: dict = Field(default_factory=dict)
+    data: dict[str, Any] = Field(default_factory=dict)
 
 class MeaningMapGenerateRequest(BaseModel):
     pericope_id: str
 
 class MeaningMapUpdateData(BaseModel):
-    data: dict
+    data: dict[str, Any]
 
 class MeaningMapStatusUpdate(BaseModel):
     status: MeaningMapStatus
@@ -136,7 +137,25 @@ class MeaningMapListResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class MeaningMapResponse(MeaningMapListResponse):
-    data: dict
+    data: dict[str, Any]
+
+class AnalystSummary(BaseModel):
+    name: str
+    assigned: int
+    draft: int
+    cross_check: int
+    approved: int
+
+
+class DashboardSummaryResponse(BaseModel):
+    total: int
+    draft: int
+    cross_check: int
+    approved: int
+    unstarted: int
+    enabled_books: int
+    analysts: list[AnalystSummary]
+
 
 class FeedbackCreate(BaseModel):
     section_key: str = Field(min_length=1, max_length=100)
