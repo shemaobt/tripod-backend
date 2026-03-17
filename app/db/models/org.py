@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
@@ -6,6 +7,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+
+
+class MemberRole(str, Enum):
+    MEMBER = "member"
+    MANAGER = "manager"
 
 
 class Organization(Base):
@@ -36,5 +42,5 @@ class OrganizationMember(Base):
     organization_id: Mapped[str] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), index=True
     )
-    role: Mapped[str] = mapped_column(String(50), default="member")
+    role: Mapped[str] = mapped_column(String(50), default=MemberRole.MEMBER.value)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
