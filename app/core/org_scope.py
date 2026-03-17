@@ -38,6 +38,6 @@ async def get_current_user_managed_org_ids(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> list[str]:
-    """FastAPI dependency – resolves managed org IDs for the authenticated user."""
+    """FastAPI dependency - resolves managed org IDs for the authenticated user."""
 
     return await get_managed_org_ids(db, user.id)
