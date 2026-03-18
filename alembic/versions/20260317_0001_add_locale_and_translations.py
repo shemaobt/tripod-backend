@@ -7,7 +7,6 @@ Create Date: 2026-03-17
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "20260317_0001"
 down_revision = "20260316_0001"
@@ -18,7 +17,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column("users", sa.Column("locale", sa.String(10), nullable=True))
     op.add_column("meaning_maps", sa.Column("translations", sa.JSON(), nullable=True))
-    op.add_column("book_context_documents", sa.Column("translations", JSONB(), nullable=True))
+    op.add_column("book_context_documents", sa.Column("translations", sa.JSON(), nullable=True))
 
 
 def downgrade() -> None:
