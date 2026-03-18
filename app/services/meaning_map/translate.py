@@ -25,9 +25,9 @@ async def translate_meaning_map(
     if not mm:
         raise NotFoundError(f"Meaning map {meaning_map_id} not found")
 
-    existing = mm.translations or {}
+    existing: dict = mm.translations or {}
     if language in existing:
-        return existing[language]
+        return dict(existing[language])
 
     translated = await translate_document_content(mm.data, language)
 

@@ -71,9 +71,13 @@ async def translate_document_content(
                 response_mime_type="application/json",
             ),
         )
-        return json.loads(response.text)
+        if not response.text:
+            raise TranslationError("LLM returned empty response")
+        result: dict = json.loads(response.text)
+        return result
     except json.JSONDecodeError as e:
-        logger.error("LLM returned unparseable JSON: %s", response.text[:500] if response.text else "")
+        preview = response.text[:500] if response.text else ""
+        logger.error("LLM returned unparseable JSON: %s", preview)
         raise TranslationError(f"LLM returned invalid JSON: {e}") from e
     except TranslationError:
         raise

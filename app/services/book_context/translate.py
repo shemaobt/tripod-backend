@@ -38,9 +38,9 @@ async def translate_bcd(
     if not bcd:
         raise NotFoundError(f"Book context document {bcd_id} not found")
 
-    existing = bcd.translations or {}
+    existing: dict = bcd.translations or {}
     if language in existing:
-        return existing[language]
+        return dict(existing[language])
 
     sections_to_translate: dict = {}
     for key in TRANSLATABLE_SECTIONS:
