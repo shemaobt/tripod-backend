@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.db.models.auth import User
 from app.models.auth import (
     AuthResponse,
+    MyManagedOrgsResponse,
     MyProjectRolesResponse,
     ProfileUpdate,
     TokenRefreshRequest,
@@ -16,6 +17,7 @@ from app.models.auth import (
     UserSignupRequest,
 )
 from app.models.role import MyRoleResponse
+from app.core.org_scope import get_managed_org_ids
 from app.services import auth_service, authorization_service, user_service
 from app.services.project import list_user_project_roles
 
@@ -109,3 +111,12 @@ async def my_roles(
 ) -> list[MyRoleResponse]:
     roles = await authorization_service.list_roles(db, user.id, app_key)
     return [MyRoleResponse(app_key=entry[0], role_key=entry[1]) for entry in roles]
+
+
+@router.get("/my-managed-orgs", response_model=MyManagedOrgsResponse)
+async def my_managed_orgs(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MyManagedOrgsResponse:
+    org_ids = await get_managed_org_ids(db, user.id)
+    return MyManagedOrgsResponse(managed_org_ids=org_ids)
