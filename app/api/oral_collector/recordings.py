@@ -9,6 +9,8 @@ from app.models.oc_recording import (
     RecordingCreate,
     RecordingResponse,
     RecordingUpdate,
+    ResumableUploadUrlRequest,
+    ResumableUploadUrlResponse,
     SplitRequest,
     SplitStatusResponse,
     UploadUrlRequest,
@@ -105,6 +107,18 @@ async def request_upload_url(
 ) -> UploadUrlResponse:
 
     return await recording_service.generate_upload_url(
+        db, payload.recording_id, payload.format, user.id
+    )
+
+
+@recordings_router.post("/resumable-upload-url", response_model=ResumableUploadUrlResponse)
+async def request_resumable_upload_url(
+    payload: ResumableUploadUrlRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ResumableUploadUrlResponse:
+
+    return await recording_service.generate_resumable_upload_url(
         db, payload.recording_id, payload.format, user.id
     )
 
