@@ -9,7 +9,6 @@ from app.db.models.org import MemberRole, Organization, OrganizationMember
 
 
 async def get_managed_org_ids(db: AsyncSession, user_id: str) -> list[str]:
-    """Return sorted list of organization IDs the user manages."""
     from_members = select(OrganizationMember.organization_id.label("org_id")).where(
         OrganizationMember.user_id == user_id,
         OrganizationMember.role == MemberRole.MANAGER,
@@ -26,5 +25,4 @@ async def get_current_user_managed_org_ids(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> list[str]:
-    """FastAPI dependency that resolves managed org IDs for the current user."""
     return await get_managed_org_ids(db, user.id)

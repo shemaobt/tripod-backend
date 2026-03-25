@@ -20,7 +20,6 @@ async def list_projects_for_user(
     organization_id: str | None = None,
     language_id: str | None = None,
 ) -> list[Project]:
-    """Return projects visible to a user, applying org/role scoping rules."""
     if user.is_platform_admin:
         if organization_id:
             projects = await list_projects_by_organization(db, organization_id)
@@ -47,7 +46,6 @@ async def _list_projects_by_organizations(
     db: AsyncSession,
     organization_ids: list[str],
 ) -> list[Project]:
-    """Fetch projects linked to any of the given organizations in a single query."""
     org_project_ids = select(ProjectOrganizationAccess.project_id).where(
         ProjectOrganizationAccess.organization_id.in_(organization_ids)
     )
