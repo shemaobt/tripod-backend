@@ -8,9 +8,7 @@ from app.db.models.book_context import BCDStatus, BookContextDocument
 LOCK_TIMEOUT = timedelta(hours=4)
 
 
-async def lock_bcd(
-    db: AsyncSession, bcd: BookContextDocument, user_id: str
-) -> BookContextDocument:
+async def lock_bcd(db: AsyncSession, bcd: BookContextDocument, user_id: str) -> BookContextDocument:
     if bcd.status != BCDStatus.DRAFT:
         raise ConflictError("Can only lock a document in draft status.")
     if bcd.locked_by and bcd.locked_by != user_id:
