@@ -36,11 +36,13 @@ async def request_password_reset(db: AsyncSession, email: str, app_key: str) -> 
     settings = get_settings()
     expires_at = datetime.now(UTC) + timedelta(minutes=settings.password_reset_token_expire_minutes)
 
-    db.add(PasswordResetToken(
-        user_id=user.id,
-        token_hash=token_hash,
-        expires_at=expires_at,
-    ))
+    db.add(
+        PasswordResetToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+    )
     await db.flush()
 
     result = await db.execute(select(App).where(App.app_key == app_key))
