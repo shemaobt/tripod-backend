@@ -27,7 +27,7 @@ class BCDParticipantEntry(BaseModel):
     name: str
     english_gloss: str = ""
     entity_type: str = "person"
-    type: str = "named"
+    type: Literal["named", "group", "divine", "location"]
     entry_verse: VerseRef
     exit_verse: VerseRef | None = None
     appears_in: list[VerseRef] = Field(default_factory=list)
