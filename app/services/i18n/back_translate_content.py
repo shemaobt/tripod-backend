@@ -22,7 +22,8 @@ BACK_TRANSLATION_MODEL = "gemini-3-flash-preview"
 BACK_TRANSLATION_PROMPT = """\
 You are a professional translator specializing in biblical and scholarly content.
 
-Translate ALL human-readable text values in the following JSON from {source_language_name} to English.
+Translate ALL human-readable text values in the following JSON
+from {source_language_name} to English.
 
 Rules:
 - Preserve the JSON structure and all field names/keys exactly as-is.
