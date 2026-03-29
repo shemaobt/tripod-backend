@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,15 +21,13 @@ router = APIRouter()
 @router.get("", response_model=list[ProjectResponse])
 async def list_projects(
     language_id: str | None = Query(default=None),
+    organization_id: UUID | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProjectResponse]:
-    if user.is_platform_admin:
-        projects = await project_service.list_all_projects(db)
-    else:
-        projects = await project_service.list_projects_accessible_to_user(db, user.id)
-    if language_id is not None:
-        projects = [p for p in projects if p.language_id == language_id]
+    projects = await project_service.list_projects_for_user(
+        db, user, str(organization_id) if organization_id else None, language_id
+    )
     return [ProjectResponse.model_validate(p) for p in projects]
 
 
