@@ -8,8 +8,8 @@ from app.core.org_scope import get_managed_org_ids
 from app.db.models.auth import User
 from app.models.auth import (
     AuthResponse,
-    MyManagedOrgsResponse,
     ForgotPasswordRequest,
+    MyManagedOrgsResponse,
     MyProjectRolesResponse,
     PasswordResetResponse,
     ProfileUpdate,
