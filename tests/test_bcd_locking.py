@@ -26,7 +26,7 @@ async def test_lock_draft_bcd(db_session):
 
 
 @pytest.mark.asyncio
-async def test_lock_rejects_non_draft(db_session):
+async def test_lock_allows_review_status(db_session):
     user = await make_user(db_session, email="lock2@test.com")
     book = await make_bible_book(
         db_session,
@@ -37,7 +37,23 @@ async def test_lock_rejects_non_draft(db_session):
     )
     bcd = await make_bcd(db_session, book.id, user.id, status="review")
 
-    with pytest.raises(ConflictError, match="draft status"):
+    result = await lock_bcd(db_session, bcd, user.id)
+    assert result.locked_by == user.id
+
+
+@pytest.mark.asyncio
+async def test_lock_rejects_approved_status(db_session):
+    user = await make_user(db_session, email="lock2b@test.com")
+    book = await make_bible_book(
+        db_session,
+        name="Ruth",
+        abbreviation="Rth2",
+        order=8,
+        chapter_count=4,
+    )
+    bcd = await make_bcd(db_session, book.id, user.id, status="approved")
+
+    with pytest.raises(ConflictError, match="draft or review status"):
         await lock_bcd(db_session, bcd, user.id)
 
 

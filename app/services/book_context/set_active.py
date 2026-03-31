@@ -1,8 +1,8 @@
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError
-from app.db.models.book_context import BCDStatus, BookContextDocument
+from app.db.models.book_context import BCDApproval, BCDStatus, BookContextDocument
 from app.services.book_context.get_bcd import get_bcd_or_404
 
 
@@ -26,7 +26,13 @@ async def set_active_bcd(
         .values(is_active=False)
     )
 
+    await db.execute(delete(BCDApproval).where(BCDApproval.bcd_id == bcd_id))
+    if bcd.status == BCDStatus.APPROVED:
+        bcd.status = BCDStatus.REVIEW
+
     bcd.is_active = True
+    bcd.locked_by = None
+    bcd.locked_at = None
     await db.commit()
     await db.refresh(bcd)
     return bcd
