@@ -9,8 +9,8 @@ LOCK_TIMEOUT = timedelta(hours=4)
 
 
 async def lock_bcd(db: AsyncSession, bcd: BookContextDocument, user_id: str) -> BookContextDocument:
-    if bcd.status != BCDStatus.DRAFT:
-        raise ConflictError("Can only lock a document in draft status.")
+    if bcd.status not in (BCDStatus.DRAFT, BCDStatus.REVIEW):
+        raise ConflictError("Can only lock a document in draft or review status.")
     if bcd.locked_by and bcd.locked_by != user_id:
         locked_at = (
             bcd.locked_at.replace(tzinfo=UTC)
