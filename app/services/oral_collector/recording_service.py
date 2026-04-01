@@ -4,7 +4,6 @@ from datetime import UTC, datetime, timedelta
 import google.auth
 import google.auth.transport.requests
 import inngest
-from google.oauth2 import service_account
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,8 +46,7 @@ def _get_signing_info() -> tuple[str, str]:
     if not _signing_credentials.valid:
         _signing_credentials.refresh(google.auth.transport.requests.Request())
     creds = _signing_credentials
-    assert isinstance(creds, service_account.Credentials)
-    return creds.service_account_email, creds.token
+    return creds.service_account_email, creds.token  # type: ignore[attr-defined]
 
 
 FORMAT_EXTENSIONS: dict[str, str] = {
