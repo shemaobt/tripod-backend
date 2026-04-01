@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     email_provider: str = "log"
     resend_api_key: str = ""
 
+    azure_tenant_id: str = ""
+    azure_client_id: str = ""
+    azure_client_secret: str = ""
+    email_from_address: str = "support@shemaywam.com"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
