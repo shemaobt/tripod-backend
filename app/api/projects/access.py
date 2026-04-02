@@ -32,9 +32,7 @@ async def grant_user_access(
 ) -> ProjectUserAccessResponse:
     await assert_project_access(db, actor, project_id)
     await project_service.get_project_or_404(db, project_id)
-    access = await project_service.grant_user_access(
-        db, project_id, payload.user_id, payload.role
-    )
+    access = await project_service.grant_user_access(db, project_id, payload.user_id, payload.role)
     return ProjectUserAccessResponse.model_validate(access)
 
 
@@ -121,9 +119,7 @@ async def update_user_access_role(
     db: AsyncSession = Depends(get_db),
 ) -> ProjectUserAccessResponse:
     await assert_project_access(db, actor, project_id)
-    access = await project_service.update_user_access_role(
-        db, project_id, user_id, payload.role
-    )
+    access = await project_service.update_user_access_role(db, project_id, user_id, payload.role)
     return ProjectUserAccessResponse.model_validate(access)
 
 
