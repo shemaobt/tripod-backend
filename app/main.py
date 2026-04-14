@@ -21,6 +21,12 @@ from app.api.oral_collector.invites import invites_router as oc_invites_router
 from app.api.oral_collector.projects import projects_router as oc_projects_router
 from app.api.oral_collector.recordings import recordings_router as oc_recordings_router
 from app.api.oral_collector.stats import stats_router as oc_stats_router
+from app.api.oral_collector.storytellers import (
+    project_storytellers_router as oc_project_storytellers_router,
+)
+from app.api.oral_collector.storytellers import (
+    storytellers_router as oc_storytellers_router,
+)
 from app.api.organizations import router as organizations_router
 from app.api.pericopes import router as pericopes_router
 from app.api.phases import router as phases_router
@@ -131,6 +137,16 @@ def create_app() -> FastAPI:
         oc_stats_router,
         prefix="/api/oc",
         tags=["oc-stats"],
+    )
+    app.include_router(
+        oc_project_storytellers_router,
+        prefix="/api/oc/projects",
+        tags=["oc-storytellers"],
+    )
+    app.include_router(
+        oc_storytellers_router,
+        prefix="/api/oc/storytellers",
+        tags=["oc-storytellers"],
     )
 
     register_exception_handlers(app)
