@@ -4,9 +4,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import UploadStatus
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.db.models.oc_genre import OC_Genre, OC_Subcategory
 from app.db.models.oc_recording import OC_Recording
+from app.db.models.oc_storyteller import OC_Storyteller
 from app.db.models.project import ProjectUserAccess
 from app.models.oc_recording import (
     ConfirmUploadRequest,
@@ -325,3 +326,124 @@ def test_resumable_upload_url_response_model() -> None:
     )
     assert resp.session_uri == "https://example.com/upload"
     assert resp.chunk_size_bytes == 8388608
+
+
+async def _seed_storyteller(
+    db: AsyncSession, project_id: str, name: str = "Ana"
+) -> OC_Storyteller:
+    st = OC_Storyteller(
+        project_id=project_id,
+        name=name,
+        sex="female",
+        external_acceptance_confirmed=True,
+    )
+    db.add(st)
+    await db.commit()
+    await db.refresh(st)
+    return st
+
+
+@pytest.mark.asyncio
+async def test_create_recording_with_storyteller(db_session: AsyncSession) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+    storyteller = await _seed_storyteller(db_session, project_id)
+
+    data = RecordingCreate(
+        project_id=project_id,
+        genre_id=genre.id,
+        subcategory_id=sub.id,
+        storyteller_id=storyteller.id,
+        duration_seconds=12.0,
+        file_size_bytes=4096,
+        format="m4a",
+        recorded_at=datetime.now(UTC),
+    )
+    rec = await rs.create_recording(db_session, data, user.id)
+    assert rec.storyteller_id == storyteller.id
+
+
+@pytest.mark.asyncio
+async def test_create_recording_rejects_cross_project_storyteller(
+    db_session: AsyncSession,
+) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id_a = await _seed_project(db_session)
+
+    lang_b = await make_language(db_session, name="Other", code="oth")
+    from tests.baker import make_project as _make_project
+
+    project_b = await _make_project(db_session, lang_b.id, name="Other Project")
+    storyteller_b = await _seed_storyteller(db_session, project_b.id)
+
+    genre, sub = await _seed_genre(db_session)
+    data = RecordingCreate(
+        project_id=project_id_a,
+        genre_id=genre.id,
+        subcategory_id=sub.id,
+        storyteller_id=storyteller_b.id,
+        duration_seconds=12.0,
+        file_size_bytes=4096,
+        format="m4a",
+        recorded_at=datetime.now(UTC),
+    )
+    with pytest.raises(ValidationError):
+        await rs.create_recording(db_session, data, user.id)
+
+
+@pytest.mark.asyncio
+async def test_update_recording_rejects_cross_project_storyteller(
+    db_session: AsyncSession,
+) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id_a = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+    rec = await _seed_recording(db_session, user.id, project_id_a, genre.id, sub.id)
+
+    lang_b = await make_language(db_session, name="Other", code="oth")
+    from tests.baker import make_project as _make_project
+
+    project_b = await _make_project(db_session, lang_b.id, name="Other Project")
+    storyteller_b = await _seed_storyteller(db_session, project_b.id)
+
+    with pytest.raises(ValidationError):
+        await rs.update_recording(
+            db_session, rec.id, RecordingUpdate(storyteller_id=storyteller_b.id)
+        )
+
+
+@pytest.mark.asyncio
+async def test_list_recordings_filter_by_user_and_storyteller(
+    db_session: AsyncSession,
+) -> None:
+    rs = _import_service()
+    user_a = await make_user(db_session, email="a@test.com")
+    user_b = await make_user(db_session, email="b@test.com")
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+    st_a = await _seed_storyteller(db_session, project_id, name="Ana")
+    st_b = await _seed_storyteller(db_session, project_id, name="Beto")
+
+    rec_a = await _seed_recording(
+        db_session, user_a.id, project_id, genre.id, sub.id,
+        upload_status=UploadStatus.UPLOADED,
+    )
+    rec_b = await _seed_recording(
+        db_session, user_b.id, project_id, genre.id, sub.id,
+        upload_status=UploadStatus.UPLOADED,
+    )
+    rec_a.storyteller_id = st_a.id
+    rec_b.storyteller_id = st_b.id
+    await db_session.commit()
+
+    by_user = await rs.list_recordings(db_session, project_id, user_id=user_a.id)
+    assert {r.id for r in by_user} == {rec_a.id}
+
+    by_st = await rs.list_recordings(
+        db_session, project_id, storyteller_id=st_b.id
+    )
+    assert {r.id for r in by_st} == {rec_b.id}
