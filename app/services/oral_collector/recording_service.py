@@ -8,9 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ACTIVE_UPLOAD_STATUSES, OCRecordingEvent, UploadStatus
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.core.inngest_client import inngest_client
 from app.db.models.oc_recording import OC_Recording
+from app.db.models.oc_storyteller import OC_Storyteller
 from app.db.models.project import ProjectUserAccess
 from app.inngest.schemas import UploadConfirmedPayload
 from app.models.oc_recording import (
@@ -70,6 +71,7 @@ async def list_recordings(
     upload_status: str | None = None,
     cleaning_status: str | None = None,
     user_id: str | None = None,
+    storyteller_id: str | None = None,
     offset: int = 0,
     limit: int = 50,
 ) -> list[OC_Recording]:
@@ -91,6 +93,8 @@ async def list_recordings(
         stmt = stmt.where(OC_Recording.cleaning_status == cleaning_status)
     if user_id:
         stmt = stmt.where(OC_Recording.user_id == user_id)
+    if storyteller_id:
+        stmt = stmt.where(OC_Recording.storyteller_id == storyteller_id)
     stmt = stmt.offset(offset).limit(limit)
     result = await db.execute(stmt)
     return list(result.scalars().all())
@@ -134,11 +138,17 @@ async def create_recording(db: AsyncSession, data: RecordingCreate, user_id: str
         if existing is not None:
             return existing
 
+    if data.storyteller_id:
+        await _validate_storyteller_in_project(
+            db, data.storyteller_id, data.project_id
+        )
+
     recording = OC_Recording(
         project_id=data.project_id,
         genre_id=data.genre_id,
         subcategory_id=data.subcategory_id,
         register_id=data.register_id,
+        storyteller_id=data.storyteller_id,
         user_id=user_id,
         title=data.title,
         description=data.description,
@@ -159,11 +169,27 @@ async def update_recording(
 
     recording = await get_recording(db, recording_id)
     update_fields = data.model_dump(exclude_unset=True)
+    if update_fields.get("storyteller_id"):
+        await _validate_storyteller_in_project(
+            db, update_fields["storyteller_id"], recording.project_id
+        )
     for field, value in update_fields.items():
         setattr(recording, field, value)
     await db.commit()
     await db.refresh(recording)
     return recording
+
+
+async def _validate_storyteller_in_project(
+    db: AsyncSession, storyteller_id: str, project_id: str
+) -> None:
+    stmt = select(OC_Storyteller).where(OC_Storyteller.id == storyteller_id)
+    result = await db.execute(stmt)
+    storyteller = result.scalar_one_or_none()
+    if storyteller is None:
+        raise NotFoundError("Storyteller not found")
+    if storyteller.project_id != project_id:
+        raise ValidationError("Storyteller does not belong to this project")
 
 
 async def delete_recording(db: AsyncSession, recording_id: str) -> None:
