@@ -26,6 +26,9 @@ class OC_Recording(Base):
     user_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True
     )
+    storyteller_id: Mapped[str | None] = mapped_column(
+        ForeignKey("oc_storytellers.id", ondelete="SET NULL"), index=True, nullable=True
+    )
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_seconds: Mapped[float] = mapped_column(Float)
