@@ -26,6 +26,7 @@ async def list_projects(
 
     project_ids = [p.id for p in projects]
     counts = await get_member_counts(db, project_ids)
+    stats = await project_service.get_projects_batch_stats(db, project_ids)
 
     return [
         OCProjectListResponse(
@@ -39,6 +40,9 @@ async def list_projects(
             created_at=p.created_at,
             updated_at=p.updated_at,
             member_count=counts.get(p.id, 0),
+            recording_count=int(stats.get(p.id, {}).get("recordings", 0)),
+            total_duration_seconds=float(stats.get(p.id, {}).get("duration", 0.0)),
+            storyteller_count=int(stats.get(p.id, {}).get("storytellers", 0)),
         )
         for p in projects
     ]
