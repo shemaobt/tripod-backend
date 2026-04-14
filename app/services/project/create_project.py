@@ -27,6 +27,6 @@ async def create_project(
     await db.refresh(project)
 
     if creator_user_id:
-        await grant_user_access(db, project.id, creator_user_id)
+        await grant_user_access(db, project.id, creator_user_id, role="manager")
 
     return project

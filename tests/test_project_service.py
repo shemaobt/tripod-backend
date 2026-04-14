@@ -25,6 +25,28 @@ async def test_create_project(db_session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_project_assigns_creator_as_manager(db_session) -> None:
+    from sqlalchemy import select
+
+    from app.db.models.project import ProjectUserAccess
+
+    lang = await make_language(db_session, code="kos")
+    user = await make_user(db_session)
+    project = await project_service.create_project(
+        db_session,
+        name="Creator Project",
+        language_id=lang.id,
+        creator_user_id=str(user.id),
+    )
+    stmt = select(ProjectUserAccess).where(
+        ProjectUserAccess.project_id == project.id,
+        ProjectUserAccess.user_id == str(user.id),
+    )
+    access = (await db_session.execute(stmt)).scalar_one()
+    assert access.role == "manager"
+
+
+@pytest.mark.asyncio
 async def test_create_project_with_location(db_session) -> None:
     lang = await make_language(db_session, code="kos")
     project = await project_service.create_project(
