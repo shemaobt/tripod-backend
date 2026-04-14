@@ -27,6 +27,7 @@ class OC_Recording(Base):
         ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True
     )
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_seconds: Mapped[float] = mapped_column(Float)
     file_size_bytes: Mapped[int] = mapped_column(Integer)
     format: Mapped[str] = mapped_column(String(20))

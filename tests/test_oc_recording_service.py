@@ -103,6 +103,49 @@ async def test_create_recording(db_session: AsyncSession) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_recording_with_description(db_session: AsyncSession) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+
+    data = RecordingCreate(
+        project_id=project_id,
+        genre_id=genre.id,
+        subcategory_id=sub.id,
+        description="Field recording from coastal village",
+        duration_seconds=12.0,
+        file_size_bytes=4096,
+        format="m4a",
+        recorded_at=datetime.now(UTC),
+    )
+    rec = await rs.create_recording(db_session, data, user.id)
+
+    assert rec.description == "Field recording from coastal village"
+
+
+@pytest.mark.asyncio
+async def test_update_recording_sets_description(db_session: AsyncSession) -> None:
+    from app.models.oc_recording import RecordingUpdate
+
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+    rec = await _seed_recording(db_session, user.id, project_id, genre.id, sub.id)
+
+    updated = await rs.update_recording(
+        db_session, rec.id, RecordingUpdate(description="A new story")
+    )
+    assert updated.description == "A new story"
+
+    cleared = await rs.update_recording(
+        db_session, rec.id, RecordingUpdate(description=None)
+    )
+    assert cleared.description is None
+
+
+@pytest.mark.asyncio
 async def test_get_recording(db_session: AsyncSession) -> None:
     rs = _import_service()
     user = await make_user(db_session)
