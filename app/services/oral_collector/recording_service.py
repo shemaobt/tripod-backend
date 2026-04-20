@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import ACTIVE_UPLOAD_STATUSES, OCRecordingEvent, UploadStatus
 from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.core.inngest_client import inngest_client
+from app.db.models.auth import User
 from app.db.models.oc_recording import OC_Recording
 from app.db.models.oc_storyteller import OC_Storyteller
 from app.db.models.project import ProjectUserAccess
@@ -112,6 +113,9 @@ async def get_recording(db: AsyncSession, recording_id: str) -> OC_Recording:
 
 async def check_recording_access(db: AsyncSession, recording: OC_Recording, user_id: str) -> None:
 
+    acting_user = await db.get(User, user_id)
+    if acting_user is not None and acting_user.is_platform_admin:
+        return
     if recording.user_id == user_id:
         return
     stmt = select(ProjectUserAccess).where(
@@ -122,7 +126,7 @@ async def check_recording_access(db: AsyncSession, recording: OC_Recording, user
     result = await db.execute(stmt)
     if result.scalar_one_or_none() is None:
         raise AuthorizationError(
-            "Only the recording owner or a project manager can modify this recording"
+            "Only the recording owner, a project manager, or a platform admin can modify this recording"
         )
 
 
