@@ -417,6 +417,76 @@ async def test_update_recording_rejects_cross_project_storyteller(
 
 
 @pytest.mark.asyncio
+async def test_create_recording_with_secondary_classification(
+    db_session: AsyncSession,
+) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+
+    genre_b = OC_Genre(name="wisdom", sort_order=1)
+    db_session.add(genre_b)
+    await db_session.flush()
+    sub_b = OC_Subcategory(genre_id=genre_b.id, name="proverb", sort_order=0)
+    db_session.add(sub_b)
+    await db_session.commit()
+    await db_session.refresh(genre_b)
+    await db_session.refresh(sub_b)
+
+    data = RecordingCreate(
+        project_id=project_id,
+        genre_id=genre.id,
+        subcategory_id=sub.id,
+        secondary_genre_id=genre_b.id,
+        secondary_subcategory_id=sub_b.id,
+        secondary_register_id="consultative",
+        duration_seconds=12.0,
+        file_size_bytes=4096,
+        format="m4a",
+        recorded_at=datetime.now(UTC),
+    )
+    rec = await rs.create_recording(db_session, data, user.id)
+    assert rec.secondary_genre_id == genre_b.id
+    assert rec.secondary_subcategory_id == sub_b.id
+    assert rec.secondary_register_id == "consultative"
+
+
+def test_recording_create_rejects_secondary_equal_to_primary() -> None:
+    from pydantic import ValidationError as PydanticValidationError
+
+    with pytest.raises(PydanticValidationError):
+        RecordingCreate(
+            project_id="p",
+            genre_id="g1",
+            subcategory_id="s1",
+            secondary_genre_id="g1",
+            duration_seconds=1.0,
+            file_size_bytes=1,
+            format="m4a",
+            recorded_at=datetime.now(UTC),
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_recording_rejects_secondary_equal_to_primary(
+    db_session: AsyncSession,
+) -> None:
+    rs = _import_service()
+    user = await make_user(db_session)
+    project_id = await _seed_project(db_session)
+    genre, sub = await _seed_genre(db_session)
+    rec = await _seed_recording(db_session, user.id, project_id, genre.id, sub.id)
+
+    with pytest.raises(ValidationError):
+        await rs.update_recording(
+            db_session,
+            rec.id,
+            RecordingUpdate(secondary_genre_id=genre.id),
+        )
+
+
+@pytest.mark.asyncio
 async def test_list_recordings_filter_by_user_and_storyteller(
     db_session: AsyncSession,
 ) -> None:
