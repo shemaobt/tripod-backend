@@ -126,7 +126,8 @@ async def check_recording_access(db: AsyncSession, recording: OC_Recording, user
     result = await db.execute(stmt)
     if result.scalar_one_or_none() is None:
         raise AuthorizationError(
-            "Only the recording owner, a project manager, or a platform admin can modify this recording"
+            "Only the recording owner, a project manager, or a platform admin "
+            "can modify this recording"
         )
 
 
