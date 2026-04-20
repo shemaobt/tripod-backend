@@ -26,6 +26,8 @@ class RecordingUpdate(BaseModel):
     subcategory_id: str | None = None
     register_id: str | None = None
     storyteller_id: str | None = None
+    duration_seconds: float | None = Field(default=None, ge=0)
+    file_size_bytes: int | None = Field(default=None, ge=0)
 
 
 class RecordingResponse(BaseModel):
