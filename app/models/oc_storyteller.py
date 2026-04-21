@@ -43,6 +43,7 @@ class StorytellerResponse(BaseModel):
     external_acceptance_confirmed: bool
     external_acceptance_confirmed_at: datetime | None = None
     external_acceptance_confirmed_by: str | None = None
+    created_by_user_id: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -44,8 +44,7 @@ async def create_storyteller(
         db,
         project_id,
         payload,
-        user.id,
-        is_platform_admin=user.is_platform_admin,
+        user,
     )
     return StorytellerResponse.model_validate(storyteller)
 
@@ -73,7 +72,6 @@ async def update_storyteller(
         storyteller_id,
         payload,
         user.id,
-        is_platform_admin=user.is_platform_admin,
     )
     return StorytellerResponse.model_validate(storyteller)
 
@@ -88,5 +86,4 @@ async def delete_storyteller(
         db,
         storyteller_id,
         user.id,
-        is_platform_admin=user.is_platform_admin,
     )
