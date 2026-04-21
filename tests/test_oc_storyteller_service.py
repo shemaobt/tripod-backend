@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
+from app.db.models.auth import User
 from app.db.models.oc_recording import OC_Recording
 from app.db.models.oc_storyteller import OC_Storyteller
 from app.db.models.project import ProjectUserAccess
@@ -13,14 +14,22 @@ from app.models.oc_storyteller import StorytellerCreate, StorytellerUpdate
 from tests.baker import make_language, make_project, make_user
 
 
-async def _seed_project_with_manager(db: AsyncSession) -> tuple[str, str]:
+async def _seed_project_with_manager(db: AsyncSession) -> tuple[str, User]:
     lang = await make_language(db)
     project = await make_project(db, lang.id)
     manager = await make_user(db, email="pm@test.com")
     access = ProjectUserAccess(project_id=project.id, user_id=manager.id, role="manager")
     db.add(access)
     await db.commit()
-    return project.id, manager.id
+    return project.id, manager
+
+
+async def _add_member(db: AsyncSession, project_id: str, email: str) -> User:
+    member = await make_user(db, email=email)
+    access = ProjectUserAccess(project_id=project_id, user_id=member.id, role="member")
+    db.add(access)
+    await db.commit()
+    return member
 
 
 def _import_service():
@@ -32,7 +41,7 @@ def _import_service():
 @pytest.mark.asyncio
 async def test_create_storyteller_as_manager(db_session: AsyncSession) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, manager = await _seed_project_with_manager(db_session)
 
     data = StorytellerCreate(
         name="Ana",
@@ -41,7 +50,7 @@ async def test_create_storyteller_as_manager(db_session: AsyncSession) -> None:
         location="Alto Xingu",
         external_acceptance_confirmed=True,
     )
-    st = await ss.create_storyteller(db_session, project_id, data, manager_id)
+    st = await ss.create_storyteller(db_session, project_id, data, manager)
 
     assert st.id is not None
     assert st.project_id == project_id
@@ -50,18 +59,32 @@ async def test_create_storyteller_as_manager(db_session: AsyncSession) -> None:
     assert st.age == 62
     assert st.external_acceptance_confirmed is True
     assert st.external_acceptance_confirmed_at is not None
-    assert st.external_acceptance_confirmed_by == manager_id
+    assert st.external_acceptance_confirmed_by == manager.id
+    assert st.created_by_user_id == manager.id
 
 
 @pytest.mark.asyncio
-async def test_create_storyteller_non_manager_blocked(db_session: AsyncSession) -> None:
+async def test_create_storyteller_as_member(db_session: AsyncSession) -> None:
+    ss = _import_service()
+    project_id, _ = await _seed_project_with_manager(db_session)
+    member = await _add_member(db_session, project_id, "member@test.com")
+
+    data = StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True)
+    st = await ss.create_storyteller(db_session, project_id, data, member)
+
+    assert st.created_by_user_id == member.id
+    assert st.external_acceptance_confirmed_by == member.id
+
+
+@pytest.mark.asyncio
+async def test_create_storyteller_non_member_blocked(db_session: AsyncSession) -> None:
     ss = _import_service()
     project_id, _ = await _seed_project_with_manager(db_session)
     outsider = await make_user(db_session, email="outsider@test.com")
 
     data = StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True)
     with pytest.raises(AuthorizationError):
-        await ss.create_storyteller(db_session, project_id, data, outsider.id)
+        await ss.create_storyteller(db_session, project_id, data, outsider)
 
 
 @pytest.mark.asyncio
@@ -75,7 +98,7 @@ async def test_create_storyteller_service_guards_unconfirmed(
     db_session: AsyncSession,
 ) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, manager = await _seed_project_with_manager(db_session)
 
     data = StorytellerCreate.model_construct(
         name="Ana",
@@ -86,7 +109,7 @@ async def test_create_storyteller_service_guards_unconfirmed(
         external_acceptance_confirmed=False,
     )
     with pytest.raises(ValidationError):
-        await ss.create_storyteller(db_session, project_id, data, manager_id)
+        await ss.create_storyteller(db_session, project_id, data, manager)
 
 
 @pytest.mark.asyncio
@@ -94,14 +117,14 @@ async def test_list_project_storytellers_ordered_by_name(
     db_session: AsyncSession,
 ) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, manager = await _seed_project_with_manager(db_session)
 
     for name in ["Zelda", "Ana", "Marcos"]:
         await ss.create_storyteller(
             db_session,
             project_id,
             StorytellerCreate(name=name, sex="female", external_acceptance_confirmed=True),
-            manager_id,
+            manager,
         )
 
     rows = await ss.list_project_storytellers(db_session, project_id)
@@ -109,16 +132,76 @@ async def test_list_project_storytellers_ordered_by_name(
 
 
 @pytest.mark.asyncio
-async def test_update_storyteller_only_by_manager(db_session: AsyncSession) -> None:
+async def test_update_own_storyteller_as_member(db_session: AsyncSession) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, _ = await _seed_project_with_manager(db_session)
+    member = await _add_member(db_session, project_id, "member@test.com")
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        member,
+    )
+
+    updated = await ss.update_storyteller(
+        db_session, st.id, StorytellerUpdate(dialect="Trumai"), member.id
+    )
+    assert updated.dialect == "Trumai"
+
+
+@pytest.mark.asyncio
+async def test_update_other_members_storyteller_blocked(
+    db_session: AsyncSession,
+) -> None:
+    ss = _import_service()
+    project_id, _ = await _seed_project_with_manager(db_session)
+    author = await _add_member(db_session, project_id, "author@test.com")
+    other = await _add_member(db_session, project_id, "other@test.com")
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        author,
+    )
+
+    with pytest.raises(AuthorizationError):
+        await ss.update_storyteller(
+            db_session, st.id, StorytellerUpdate(dialect="Trumai"), other.id
+        )
+
+
+@pytest.mark.asyncio
+async def test_manager_can_update_any_storyteller(db_session: AsyncSession) -> None:
+    ss = _import_service()
+    project_id, manager = await _seed_project_with_manager(db_session)
+    member = await _add_member(db_session, project_id, "member@test.com")
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        member,
+    )
+
+    updated = await ss.update_storyteller(
+        db_session, st.id, StorytellerUpdate(dialect="Kuikuro"), manager.id
+    )
+    assert updated.dialect == "Kuikuro"
+
+
+@pytest.mark.asyncio
+async def test_update_storyteller_non_member_blocked(db_session: AsyncSession) -> None:
+    ss = _import_service()
+    project_id, manager = await _seed_project_with_manager(db_session)
     outsider = await make_user(db_session, email="outsider@test.com")
 
     st = await ss.create_storyteller(
         db_session,
         project_id,
         StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
-        manager_id,
+        manager,
     )
 
     with pytest.raises(AuthorizationError):
@@ -126,11 +209,26 @@ async def test_update_storyteller_only_by_manager(db_session: AsyncSession) -> N
             db_session, st.id, StorytellerUpdate(dialect="Trumai"), outsider.id
         )
 
-    updated = await ss.update_storyteller(
-        db_session, st.id, StorytellerUpdate(dialect="Trumai"), manager_id
+
+@pytest.mark.asyncio
+async def test_platform_admin_can_edit_any_storyteller(
+    db_session: AsyncSession,
+) -> None:
+    ss = _import_service()
+    project_id, manager = await _seed_project_with_manager(db_session)
+    admin = await make_user(db_session, email="admin@test.com", is_platform_admin=True)
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        manager,
     )
-    assert updated.dialect == "Trumai"
-    assert updated.external_acceptance_confirmed_by == manager_id
+
+    updated = await ss.update_storyteller(
+        db_session, st.id, StorytellerUpdate(name="Anna"), admin.id
+    )
+    assert updated.name == "Anna"
 
 
 @pytest.mark.asyncio
@@ -138,18 +236,18 @@ async def test_update_storyteller_preserves_audit_fields(
     db_session: AsyncSession,
 ) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, manager = await _seed_project_with_manager(db_session)
 
     st = await ss.create_storyteller(
         db_session,
         project_id,
         StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
-        manager_id,
+        manager,
     )
     confirmed_at = st.external_acceptance_confirmed_at
     confirmed_by = st.external_acceptance_confirmed_by
 
-    await ss.update_storyteller(db_session, st.id, StorytellerUpdate(name="Anna"), manager_id)
+    await ss.update_storyteller(db_session, st.id, StorytellerUpdate(name="Anna"), manager.id)
     refreshed = await ss.get_storyteller(db_session, st.id)
     assert refreshed.name == "Anna"
     assert refreshed.external_acceptance_confirmed_at == confirmed_at
@@ -157,17 +255,75 @@ async def test_update_storyteller_preserves_audit_fields(
 
 
 @pytest.mark.asyncio
-async def test_delete_storyteller_nulls_recording_link(
-    db_session: AsyncSession,
-) -> None:
+async def test_delete_own_storyteller_as_member(db_session: AsyncSession) -> None:
     ss = _import_service()
-    project_id, manager_id = await _seed_project_with_manager(db_session)
+    project_id, _ = await _seed_project_with_manager(db_session)
+    member = await _add_member(db_session, project_id, "member@test.com")
 
     st = await ss.create_storyteller(
         db_session,
         project_id,
         StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
-        manager_id,
+        member,
+    )
+
+    await ss.delete_storyteller(db_session, st.id, member.id)
+
+    with pytest.raises(NotFoundError):
+        await ss.get_storyteller(db_session, st.id)
+
+
+@pytest.mark.asyncio
+async def test_delete_other_members_storyteller_blocked(
+    db_session: AsyncSession,
+) -> None:
+    ss = _import_service()
+    project_id, _ = await _seed_project_with_manager(db_session)
+    author = await _add_member(db_session, project_id, "author@test.com")
+    other = await _add_member(db_session, project_id, "other@test.com")
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        author,
+    )
+
+    with pytest.raises(AuthorizationError):
+        await ss.delete_storyteller(db_session, st.id, other.id)
+
+
+@pytest.mark.asyncio
+async def test_manager_can_delete_any_storyteller(db_session: AsyncSession) -> None:
+    ss = _import_service()
+    project_id, manager = await _seed_project_with_manager(db_session)
+    member = await _add_member(db_session, project_id, "member@test.com")
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        member,
+    )
+
+    await ss.delete_storyteller(db_session, st.id, manager.id)
+
+    with pytest.raises(NotFoundError):
+        await ss.get_storyteller(db_session, st.id)
+
+
+@pytest.mark.asyncio
+async def test_delete_storyteller_nulls_recording_link(
+    db_session: AsyncSession,
+) -> None:
+    ss = _import_service()
+    project_id, manager = await _seed_project_with_manager(db_session)
+
+    st = await ss.create_storyteller(
+        db_session,
+        project_id,
+        StorytellerCreate(name="Ana", sex="female", external_acceptance_confirmed=True),
+        manager,
     )
 
     from app.db.models.oc_genre import OC_Genre, OC_Subcategory
@@ -184,7 +340,7 @@ async def test_delete_storyteller_nulls_recording_link(
         genre_id=genre.id,
         subcategory_id=sub.id,
         storyteller_id=st.id,
-        user_id=manager_id,
+        user_id=manager.id,
         title="test",
         duration_seconds=10.0,
         file_size_bytes=1024,
@@ -196,7 +352,7 @@ async def test_delete_storyteller_nulls_recording_link(
     await db_session.refresh(rec)
     assert rec.storyteller_id == st.id
 
-    await ss.delete_storyteller(db_session, st.id, manager_id)
+    await ss.delete_storyteller(db_session, st.id, manager.id)
 
     await db_session.refresh(rec)
     assert rec.storyteller_id is None

@@ -3,10 +3,12 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
+from app.db.models.auth import User
 from app.db.models.oc_storyteller import OC_Storyteller
+from app.db.models.project import ProjectUserAccess
 from app.models.oc_storyteller import StorytellerCreate, StorytellerUpdate
-from app.services.oral_collector.require_manager import require_project_manager
+from app.services.oral_collector.require_access import require_project_access
 
 
 async def list_project_storytellers(db: AsyncSession, project_id: str) -> list[OC_Storyteller]:
@@ -30,22 +32,39 @@ async def get_storyteller(db: AsyncSession, storyteller_id: str) -> OC_Storytell
     return storyteller
 
 
+async def check_storyteller_access(
+    db: AsyncSession, storyteller: OC_Storyteller, user_id: str
+) -> None:
+    """Raise AuthorizationError unless the user can modify the storyteller.
+
+    Allowed: platform admins, project managers, or the storyteller's creator.
+    """
+    acting_user = await db.get(User, user_id)
+    if acting_user is not None and acting_user.is_platform_admin:
+        return
+    if storyteller.created_by_user_id == user_id:
+        return
+    stmt = select(ProjectUserAccess).where(
+        ProjectUserAccess.project_id == storyteller.project_id,
+        ProjectUserAccess.user_id == user_id,
+        ProjectUserAccess.role == "manager",
+    )
+    result = await db.execute(stmt)
+    if result.scalar_one_or_none() is None:
+        raise AuthorizationError(
+            "Only the storyteller's creator, a project manager, "
+            "or a platform admin can modify this storyteller"
+        )
+
+
 async def create_storyteller(
     db: AsyncSession,
     project_id: str,
     data: StorytellerCreate,
-    user_id: str,
-    *,
-    is_platform_admin: bool = False,
+    user: User,
 ) -> OC_Storyteller:
-    """Create a storyteller for a project. Requires project manager role or platform admin."""
-    await require_project_manager(
-        db,
-        project_id,
-        user_id,
-        action="create storytellers",
-        is_platform_admin=is_platform_admin,
-    )
+    """Create a storyteller for a project. Any project member may create."""
+    await require_project_access(db, project_id, user)
     if not data.external_acceptance_confirmed:
         raise ValidationError(
             "External acceptance validation is required before registering a storyteller"
@@ -60,7 +79,8 @@ async def create_storyteller(
         dialect=data.dialect,
         external_acceptance_confirmed=True,
         external_acceptance_confirmed_at=datetime.now(UTC),
-        external_acceptance_confirmed_by=user_id,
+        external_acceptance_confirmed_by=user.id,
+        created_by_user_id=user.id,
     )
     db.add(storyteller)
     await db.commit()
@@ -73,18 +93,10 @@ async def update_storyteller(
     storyteller_id: str,
     data: StorytellerUpdate,
     user_id: str,
-    *,
-    is_platform_admin: bool = False,
 ) -> OC_Storyteller:
-    """Update a storyteller's editable fields. Requires project manager role or platform admin."""
+    """Update a storyteller. Allowed for the creator, project managers, or platform admins."""
     storyteller = await get_storyteller(db, storyteller_id)
-    await require_project_manager(
-        db,
-        storyteller.project_id,
-        user_id,
-        action="update storytellers",
-        is_platform_admin=is_platform_admin,
-    )
+    await check_storyteller_access(db, storyteller, user_id)
 
     update_fields = data.model_dump(exclude_unset=True)
     for field, value in update_fields.items():
@@ -98,17 +110,9 @@ async def delete_storyteller(
     db: AsyncSession,
     storyteller_id: str,
     user_id: str,
-    *,
-    is_platform_admin: bool = False,
 ) -> None:
     """Delete a storyteller. Linked recordings keep their data; storyteller_id is set to NULL."""
     storyteller = await get_storyteller(db, storyteller_id)
-    await require_project_manager(
-        db,
-        storyteller.project_id,
-        user_id,
-        action="delete storytellers",
-        is_platform_admin=is_platform_admin,
-    )
+    await check_storyteller_access(db, storyteller, user_id)
     await db.delete(storyteller)
     await db.commit()
