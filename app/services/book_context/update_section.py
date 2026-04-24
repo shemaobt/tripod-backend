@@ -1,6 +1,8 @@
+import copy
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.db.models.book_context import BCDStatus, BookContextDocument
@@ -30,7 +32,19 @@ async def update_section(
     user_id: str,
     locale: str = "en",
 ) -> BookContextDocument:
-    """Update a BCD section. Back-translates to English if locale is not 'en'."""
+    """Update a BCD section, keeping the per-locale translation cache coherent.
+
+    English remains the canonical source. On any save, the English field is
+    overwritten. The translation cache is then reconciled so that:
+
+    - If ``locale == "en"``: the edited ``section_key`` is dropped from every
+      cached non-English locale (they are now stale). Other sections' caches
+      are preserved.
+    - If ``locale != "en"``: the user's original (non-English) payload is
+      back-translated to English and stored at the top level, and the raw
+      payload is preserved verbatim under ``translations[locale][section_key]``.
+      The same ``section_key`` is dropped from every other cached locale.
+    """
     bcd = await get_bcd_or_404(db, bcd_id)
 
     if bcd.status == BCDStatus.APPROVED:
@@ -50,11 +64,37 @@ async def update_section(
     if bcd.locked_by != user_id:
         raise AuthorizationError("This document is locked by another user.")
 
+    original_payload = data
     if locale and locale != "en" and isinstance(data, dict):
-        data = await back_translate_content(data, locale)
+        english_data = await back_translate_content(data, locale)
+    else:
+        english_data = data
 
-    setattr(bcd, section_key, data)
-    bcd.translations = None
+    setattr(bcd, section_key, english_data)
+
+    translations = copy.deepcopy(bcd.translations) if bcd.translations else {}
+
+    if locale and locale != "en":
+        locale_cache = translations.get(locale)
+        if not isinstance(locale_cache, dict):
+            locale_cache = {}
+            translations[locale] = locale_cache
+        locale_cache[section_key] = original_payload
+
+    for cached_locale in list(translations.keys()):
+        if cached_locale == locale:
+            continue
+        sections = translations[cached_locale]
+        if isinstance(sections, dict):
+            sections.pop(section_key, None)
+            if not sections:
+                del translations[cached_locale]
+        else:
+            del translations[cached_locale]
+
+    bcd.translations = translations if translations else None
+    flag_modified(bcd, "translations")
+
     await db.commit()
     await db.refresh(bcd)
     return bcd
