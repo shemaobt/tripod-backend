@@ -47,7 +47,8 @@ class ValidationError(Exception):
 class InvalidCleaningStatusError(ValidationError):
     def __init__(self, status: str):
         super().__init__(
-            f"Invalid cleaning status '{status}'. Valid statuses are: {', '.join(USER_SETTABLE_CLEANING_STATUSES)}"
+            f"Invalid cleaning status '{status}'. "
+            f"Valid statuses are: {', '.join(USER_SETTABLE_CLEANING_STATUSES)}"
         )
 
 
