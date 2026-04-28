@@ -7,7 +7,13 @@ import inngest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import ACTIVE_UPLOAD_STATUSES, OCRecordingEvent, SplittingStatus, UploadStatus
+from app.core.enums import (
+    ACTIVE_UPLOAD_STATUSES,
+    USER_SETTABLE_CLEANING_STATUSES,
+    OCRecordingEvent,
+    SplittingStatus,
+    UploadStatus,
+)
 from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.core.inngest_client import inngest_client
 from app.db.models.auth import User
@@ -185,6 +191,12 @@ async def update_recording(
         new_secondary = update_fields["secondary_genre_id"]
         if new_secondary is not None and new_secondary == effective_primary:
             raise ValidationError("secondary_genre_id must differ from primary genre_id")
+    if "cleaning_status" in update_fields:
+        new_status = update_fields["cleaning_status"]
+        if new_status not in USER_SETTABLE_CLEANING_STATUSES:
+            raise ValidationError(
+                "cleaning_status can only be set to 'none' or 'needs_cleaning' via this endpoint"
+            )
     for field, value in update_fields.items():
         setattr(recording, field, value)
     await db.commit()

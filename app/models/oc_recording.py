@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.core.enums import SplittingStatus
+from app.core.enums import CleaningStatus, SplittingStatus
 
 
 class RecordingCreate(BaseModel):
@@ -40,6 +40,7 @@ class RecordingUpdate(BaseModel):
     storyteller_id: str | None = None
     duration_seconds: float | None = Field(default=None, ge=0)
     file_size_bytes: int | None = Field(default=None, ge=0)
+    cleaning_status: CleaningStatus | None = None
 
     @model_validator(mode="after")
     def _check_secondary_not_equal_primary(self) -> "RecordingUpdate":
