@@ -14,9 +14,15 @@ ACTIVE_UPLOAD_STATUSES: list[str] = [UploadStatus.UPLOADED, UploadStatus.VERIFIE
 
 class CleaningStatus(StrEnum):
     NONE = "none"
+    NEEDS_CLEANING = "needs_cleaning"
     CLEANING = "cleaning"
     CLEANED = "cleaned"
     FAILED = "failed"
+
+
+USER_SETTABLE_CLEANING_STATUSES: frozenset[CleaningStatus] = frozenset(
+    {CleaningStatus.NONE, CleaningStatus.NEEDS_CLEANING}
+)
 
 
 class SplittingStatus(StrEnum):
