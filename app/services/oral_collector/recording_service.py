@@ -7,8 +7,20 @@ import inngest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import ACTIVE_UPLOAD_STATUSES, OCRecordingEvent, SplittingStatus, UploadStatus
-from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
+from app.core.enums import (
+    ACTIVE_UPLOAD_STATUSES,
+    USER_SETTABLE_CLEANING_STATUSES,
+    OCRecordingEvent,
+    SplittingStatus,
+    UploadStatus,
+)
+from app.core.exceptions import (
+    AuthorizationError,
+    GenreConflictError,
+    InvalidCleaningStatusError,
+    NotFoundError,
+    ValidationError,
+)
 from app.core.inngest_client import inngest_client
 from app.db.models.auth import User
 from app.db.models.oc_recording import OC_Recording
@@ -176,15 +188,17 @@ async def update_recording(
 
     recording = await get_recording(db, recording_id)
     update_fields = data.model_dump(exclude_unset=True)
-    if update_fields.get("storyteller_id"):
-        await _validate_storyteller_in_project(
-            db, update_fields["storyteller_id"], recording.project_id
-        )
-    if "secondary_genre_id" in update_fields:
-        effective_primary = update_fields.get("genre_id", recording.genre_id)
-        new_secondary = update_fields["secondary_genre_id"]
+    if data.storyteller_id is not None:
+        await _validate_storyteller_in_project(db, data.storyteller_id, recording.project_id)
+    if data.secondary_genre_id is not None:
+        effective_primary = data.genre_id if data.genre_id is not None else recording.genre_id
+        new_secondary = data.secondary_genre_id
         if new_secondary is not None and new_secondary == effective_primary:
-            raise ValidationError("secondary_genre_id must differ from primary genre_id")
+            raise GenreConflictError
+    if data.cleaning_status is not None:
+        new_status = data.cleaning_status
+        if new_status not in USER_SETTABLE_CLEANING_STATUSES:
+            raise InvalidCleaningStatusError(new_status)
     for field, value in update_fields.items():
         setattr(recording, field, value)
     await db.commit()

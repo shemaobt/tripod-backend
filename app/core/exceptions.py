@@ -4,6 +4,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.enums import USER_SETTABLE_CLEANING_STATUSES
+
 logger = logging.getLogger(__name__)
 
 ERROR_CODE_UNAUTHORIZED = "UNAUTHORIZED"
@@ -40,6 +42,19 @@ class NotFoundError(Exception):
 
 class ValidationError(Exception):
     pass
+
+
+class InvalidCleaningStatusError(ValidationError):
+    def __init__(self, status: str) -> None:
+        super().__init__(
+            f"Invalid cleaning status '{status}'. "
+            f"Valid statuses are: {', '.join(USER_SETTABLE_CLEANING_STATUSES)}"
+        )
+
+
+class GenreConflictError(ValidationError):
+    def __init__(self) -> None:
+        super().__init__("secondary_genre_id must differ from primary genre_id")
 
 
 def _error_body(detail: str, code: str) -> dict[str, str]:
