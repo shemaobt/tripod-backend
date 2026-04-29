@@ -127,9 +127,7 @@ async def generate_participants(
 ) -> dict[str, list[dict[str, Any]]]:
     bhsa_entities = state.get("bhsa_entities", [])
     person_entities = [e for e in bhsa_entities if e.get("entity_type") in ("person", "ambiguous")]
-    common_nouns = [
-        c for c in state.get("bhsa_common_nouns", []) if c.get("sp") == "subs"
-    ]
+    common_nouns = [c for c in state.get("bhsa_common_nouns", []) if c.get("sp") == "subs"]
     common_nouns_json = json.dumps(common_nouns, indent=2, ensure_ascii=False)
 
     if len(person_entities) <= BATCH_SIZE:
