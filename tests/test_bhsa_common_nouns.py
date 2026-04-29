@@ -201,3 +201,142 @@ def test_top_n_truncates_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
     result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 1)
     assert len(result["bhsa_common_nouns"]) == bhsa_common_nouns._TOP_N
+
+
+def test_includes_adjectives_with_valid_function(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = [
+        {
+            "chapter": 1,
+            "verse_count": 2,
+            "clauses": [
+                {
+                    "verse": 1,
+                    "content_words": [_content("יהודי", "adjv", gloss="Jewish", function="Subj")],
+                },
+                {
+                    "verse": 2,
+                    "content_words": [_content("יהודי", "adjv", gloss="Jewish", function="Cmpl")],
+                },
+            ],
+        }
+    ]
+    monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
+    result = bhsa_common_nouns.extract_common_noun_candidates(None, "Esther", 1)
+    candidates = result["bhsa_common_nouns"]
+    assert len(candidates) == 1
+    assert candidates[0]["lemma"] == "יהודי"
+    assert candidates[0]["sp"] == "adjv"
+    assert candidates[0]["appearance_count"] == 2
+
+
+def test_excludes_adjective_only_in_adjunct(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = [
+        {
+            "chapter": 1,
+            "verse_count": 2,
+            "clauses": [
+                {
+                    "verse": 1,
+                    "content_words": [_content("גדול", "adjv", gloss="great", function="Adju")],
+                },
+                {
+                    "verse": 2,
+                    "content_words": [_content("גדול", "adjv", gloss="great", function="Time")],
+                },
+            ],
+        }
+    ]
+    monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
+    result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 1)
+    assert result["bhsa_common_nouns"] == []
+
+
+def test_sample_appears_in_caps_at_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    n_appearances = bhsa_common_nouns._SAMPLE_LIMIT + 4
+    clauses = [
+        {
+            "verse": v,
+            "content_words": [_content("דבר", "subs", gloss="word", function="Objc")],
+        }
+        for v in range(1, n_appearances + 1)
+    ]
+    payload = [{"chapter": 1, "verse_count": n_appearances, "clauses": clauses}]
+    monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
+    result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 1)
+    cand = result["bhsa_common_nouns"][0]
+    assert cand["appearance_count"] == n_appearances
+    assert len(cand["sample_appears_in"]) == bhsa_common_nouns._SAMPLE_LIMIT
+    assert cand["sample_appears_in"][0] == {"chapter": 1, "verse": 1}
+
+
+def _ruth_like_payload() -> list[dict[str, Any]]:
+    """Mock BHSA stream covering the critical Ruth lemmas reported in ENG-13.
+
+    Produces multi-occurrence content_words for: שׂדה (field), נעל (sandal),
+    שׁער (gate), גאל as a substantive (kinsman-redeemer) and גאל as a verb
+    (to redeem). Each lemma appears in ≥2 verses with valid syntactic
+    functions so the extractor's filters retain them.
+    """
+    occurrences: list[tuple[int, int, dict[str, Any]]] = [
+        (1, 6, _content("שׂדה", "subs", gloss="open field", function="Cmpl")),
+        (2, 2, _content("שׂדה", "subs", gloss="open field", function="Cmpl")),
+        (2, 3, _content("שׂדה", "subs", gloss="open field", function="Subj")),
+        (4, 7, _content("נעל", "subs", gloss="sandal", function="Objc")),
+        (4, 8, _content("נעל", "subs", gloss="sandal", function="Cmpl")),
+        (4, 1, _content("שׁער", "subs", gloss="gate", function="Cmpl")),
+        (4, 11, _content("שׁער", "subs", gloss="gate", function="Cmpl")),
+        (3, 12, _content("גאל", "subs", gloss="redeemer", function="Subj")),
+        (4, 1, _content("גאל", "subs", gloss="redeemer", function="Subj")),
+        (4, 4, _content("גאל", "verb", gloss="redeem", function="Pred", binyan="qal")),
+        (4, 6, _content("גאל", "verb", gloss="redeem", function="Pred", binyan="qal")),
+    ]
+    by_chapter: dict[int, list[dict[str, Any]]] = {}
+    for ch, v, cw in occurrences:
+        by_chapter.setdefault(ch, []).append({"verse": v, "content_words": [cw]})
+    return [
+        {"chapter": ch, "verse_count": max(c["verse"] for c in clauses), "clauses": clauses}
+        for ch, clauses in sorted(by_chapter.items())
+    ]
+
+
+def test_ruth_critical_lemmas_are_captured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(_ruth_like_payload()))
+    result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 4)
+    by_key = {(c["lemma"], c["sp"]): c for c in result["bhsa_common_nouns"]}
+    assert ("שׂדה", "subs") in by_key, "field (שׂדה) must be captured"
+    assert ("נעל", "subs") in by_key, "sandal (נעל) must be captured"
+    assert ("שׁער", "subs") in by_key, "gate (שׁער) must be captured"
+    assert ("גאל", "subs") in by_key, "kinsman-redeemer (גאל subs) must be captured"
+    assert ("גאל", "verb") in by_key, "redeem (גאל verb) must be captured separately"
+
+
+def test_esther_low_frequency_lemma_survives_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression for the original top-80 cap that dropped שׁרביט (4 occurrences) in Esther."""
+    clauses: list[dict[str, Any]] = []
+    verse = 1
+    # 100 high-frequency dummy lemmas (5 occurrences each) — far below the 250 cap.
+    for i in range(100):
+        for _ in range(5):
+            clauses.append(
+                {
+                    "verse": verse,
+                    "content_words": [
+                        _content(f"dummy{i}", "subs", gloss=f"d{i}", function="Subj"),
+                    ],
+                }
+            )
+            verse += 1
+    # The scepter only has 4 occurrences — must still survive.
+    for _ in range(4):
+        clauses.append(
+            {
+                "verse": verse,
+                "content_words": [_content("שׁרביט", "subs", gloss="staff", function="Objc")],
+            }
+        )
+        verse += 1
+    payload = [{"chapter": 1, "verse_count": verse - 1, "clauses": clauses}]
+    monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
+    result = bhsa_common_nouns.extract_common_noun_candidates(None, "Esther", 1)
+    lemmas = {c["lemma"] for c in result["bhsa_common_nouns"]}
+    assert "שׁרביט" in lemmas, "scepter must survive the cap when total candidates < _TOP_N"
