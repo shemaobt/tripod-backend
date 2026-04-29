@@ -43,40 +43,69 @@ entity_type, entry_verse, exit_verse, appears_in, and appearance_count.
 
 {place_entities}
 
+## Common Noun Candidates (BHSA-extracted: substantives, adjectives, verbs)
+
+The following common-noun lemmas (and verbs) were extracted from the BHSA. Use \
+this list to (a) find COMMON-NOUN PLACES (e.g. field, gate, threshing floor), \
+(b) anchor OBJECTS to specific Hebrew lemmas, and (c) anchor INSTITUTIONS to \
+verbal lemmas of institutional actions (e.g. גאל "redeem", לקט "glean"). Each \
+candidate has: lemma, lemma_ascii, english_gloss, sp ("subs"/"adjv"/"verb"), \
+appearance_count, top_functions, top_binyans, first_appears, sample_appears_in.
+
+{common_nouns}
+
 Generate the remaining sections:
 
 1. **Theological Spine**: 2-4 paragraphs describing the theological arc of the book. \
 How does God act? What theological themes run through the narrative? What is the book's \
 contribution to the canon?
 
-2. **Places**: Create an entry for EACH place entity listed above. \
-All entities have already been classified as places — do not skip any.
-For each place:
+2. **Places**: Two sources.
+(a) For EACH proper-noun place entity in the list above, create an entry: \
 - name: Copy EXACTLY from the entity data
 - english_gloss: Copy from the entity data. If empty, provide the English \
 translation of the Hebrew name.
-- entity_type: Copy EXACTLY from the entity data
+- entity_type: Copy EXACTLY from the entity data ("place")
 - first_appears: Copy EXACTLY from the entity data (use entry_verse)
 - type: city, region, field, country, etc.
 - meaning_and_function: The place's significance in the narrative
 - appears_in: Copy the ENTIRE appears_in list EXACTLY from the entity data
 - appearance_count: Copy EXACTLY from the entity data
+The static fields (name, english_gloss, entity_type, first_appears, appears_in, \
+appearance_count) MUST match the entity data exactly. Do NOT invent proper-noun \
+places not in the list.
 
-CRITICAL: The name, english_gloss, entity_type, first_appears, appears_in, and \
-appearance_count fields are static and MUST match the entity data exactly. \
-Do NOT invent places not in the list.
+(b) Additionally, you MAY add COMMON-NOUN PLACES (field, gate, threshing floor, \
+city wall, etc.) drawn from the Common Noun Candidates above when they function \
+as narrative settings. For these:
+- name: the Hebrew lemma (lemma) from the candidate
+- english_gloss: the candidate's english_gloss
+- entity_type: "place_common"
+- first_appears: copy from candidate's first_appears
+- appears_in: copy from candidate's sample_appears_in
+- appearance_count: copy from candidate's appearance_count
+- type, meaning_and_function: your scholarly enrichment.
+For source (b), you MUST select from the Common Noun Candidates list — do NOT \
+invent common-noun places outside the list.
 
 3. **Objects**: Significant physical objects, animals, or temporal markers from the text. \
-These are typically NOT proper nouns, so they won't be in the entity list. \
 For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
 (English translation of the name — if the name is already English, repeat it), \
-first_appears, what_it_is, meaning_across_scenes, appears_in.
+first_appears, what_it_is, meaning_across_scenes, appears_in. \
+PREFERRED: when a candidate from the Common Noun Candidates list matches an object \
+you would identify (e.g. sandal, grain, garment), use the candidate's lemma as `name`, \
+copy `english_gloss`, `first_appears`, and `appears_in` from the candidate. The \
+ability to infer objects from narrative context remains.
 
-4. **Institutions**: Cultural/legal institutions referenced in the text. \
-These are typically NOT proper nouns, so they won't be in the entity list. \
+4. **Institutions**: Cultural/legal/religious institutions referenced in the text. \
 For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
 (English translation of the name — if the name is already English, repeat it), \
-first_invoked (chapter/verse), what_it_is, role_in_book, appears_in.
+first_invoked (chapter/verse), what_it_is, role_in_book, appears_in. \
+PREFERRED: when an institution corresponds to a verbal lemma in the candidates \
+(e.g. גאל "redeem" → kinsman-redemption institution; לקט "glean" → gleaning rights), \
+use the verbal lemma to anchor the entry with richer attestation. \
+You may also include institutions implicit in the narrative even when no single \
+lemma names them (e.g. levirate marriage in Ruth 4).
 
 5. **Genre Context**:
 - primary_genre: The primary literary genre
@@ -105,30 +134,64 @@ Discourse threads:
 BHSA linguistic data summary:
 {bhsa_summary}
 
-Generate the following sections (places are handled separately):
+## Common Noun Candidates (BHSA-extracted: substantives, adjectives, verbs)
+
+The following common-noun lemmas (and verbs) were extracted from the BHSA. Use \
+this list to (a) find COMMON-NOUN PLACES (e.g. field, gate, threshing floor), \
+(b) anchor OBJECTS to specific Hebrew lemmas, and (c) anchor INSTITUTIONS to \
+verbal lemmas of institutional actions (e.g. גאל "redeem", לקט "glean"). Each \
+candidate has: lemma, lemma_ascii, english_gloss, sp ("subs"/"adjv"/"verb"), \
+appearance_count, top_functions, top_binyans, first_appears, sample_appears_in.
+
+{common_nouns}
+
+Generate the following sections (proper-noun places are handled in a separate batch):
 
 1. **Theological Spine**: 2-4 paragraphs describing the theological arc of the book. \
 How does God act? What theological themes run through the narrative? What is the book's \
 contribution to the canon?
 
-2. **Objects**: Significant physical objects, animals, or temporal markers from the text. \
+2. **Common-Noun Places**: You MAY add COMMON-NOUN PLACES (field, gate, threshing \
+floor, city wall, etc.) drawn from the Common Noun Candidates above when they \
+function as narrative settings. For these:
+- name: the Hebrew lemma (lemma) from the candidate
+- english_gloss: the candidate's english_gloss
+- entity_type: "place_common"
+- first_appears: copy from candidate's first_appears
+- appears_in: copy from candidate's sample_appears_in
+- appearance_count: copy from candidate's appearance_count
+- type, meaning_and_function: your scholarly enrichment.
+You MUST select from the Common Noun Candidates list — do NOT invent common-noun \
+places outside the list. (Proper-noun places are emitted in a separate batch — \
+do NOT include them here.)
+
+3. **Objects**: Significant physical objects, animals, or temporal markers from the text. \
 For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
 (English translation of the name — if the name is already English, repeat it), \
-first_appears, what_it_is, meaning_across_scenes, appears_in.
+first_appears, what_it_is, meaning_across_scenes, appears_in. \
+PREFERRED: when a candidate from the Common Noun Candidates list matches an object \
+you would identify (e.g. sandal, grain, garment), use the candidate's lemma as `name`, \
+copy `english_gloss`, `first_appears`, and `appears_in` from the candidate. The \
+ability to infer objects from narrative context remains.
 
-3. **Institutions**: Cultural/legal institutions referenced in the text. \
+4. **Institutions**: Cultural/legal/religious institutions referenced in the text. \
 For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
 (English translation of the name — if the name is already English, repeat it), \
-first_invoked (chapter/verse), what_it_is, role_in_book, appears_in.
+first_invoked (chapter/verse), what_it_is, role_in_book, appears_in. \
+PREFERRED: when an institution corresponds to a verbal lemma in the candidates \
+(e.g. גאל "redeem" → kinsman-redemption institution; לקט "glean" → gleaning rights), \
+use the verbal lemma to anchor the entry with richer attestation. \
+You may also include institutions implicit in the narrative even when no single \
+lemma names them (e.g. levirate marriage in Ruth 4).
 
-4. **Genre Context**:
+5. **Genre Context**:
 - primary_genre: The primary literary genre
 - sub_genres: List of secondary genres present
 - narrative_voice: Description of the narrative perspective
 - temporal_setting: When the events take place
 - audience_positioning: How the text positions the reader/listener
 
-5. **Maintenance Notes**:
+6. **Maintenance Notes**:
 - generation_notes: Brief note about how this document was generated
 - known_limitations: List of known limitations or areas that may need human review
 """
@@ -168,6 +231,9 @@ def _build_shared_context(state: BCDGenerationState) -> dict[str, str]:
         "participants": summarize_participants(state.get("participant_register", [])),
         "threads": json.dumps(state.get("discourse_threads", []), indent=2),
         "bhsa_summary": state.get("bhsa_summary", ""),
+        "common_nouns": json.dumps(
+            state.get("bhsa_common_nouns", []), indent=2, ensure_ascii=False
+        ),
     }
 
 
@@ -251,6 +317,13 @@ async def generate_context_sections(
             if name not in seen_names:
                 seen_names.add(name)
                 all_places.append(p)
+
+    for p in sections.places:
+        entry = p.model_dump()
+        name = entry.get("name", "")
+        if name and name not in seen_names:
+            seen_names.add(name)
+            all_places.append(entry)
 
     return {
         "theological_spine": sections.theological_spine,
