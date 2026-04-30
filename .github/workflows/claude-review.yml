@@ -45,6 +45,7 @@ jobs:
           fi
 
       - name: Run Claude review
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -123,3 +124,49 @@ jobs:
             --model ${{ steps.tier.outputs.model }}
             --max-turns 12
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git log:*),Bash(git diff:*),Read,Grep,Glob"
+
+      - name: Render cost summary
+        id: cost
+        if: always()
+        shell: bash
+        env:
+          CLAUDE_EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          CLAUDE_COST_OUT: ${{ runner.temp }}/claude-cost.json
+          CLAUDE_COST_PR_FOOTER: ${{ runner.temp }}/claude-cost-pr-footer.md
+          CLAUDE_PR_NUMBER: ${{ github.event.pull_request.number }}
+          CLAUDE_REVIEW_TIER: ${{ steps.tier.outputs.label }}
+        run: python3 .github/scripts/claude_cost.py
+
+      - name: Post or update PR cost footer
+        if: always() && github.event.pull_request.number != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          FOOTER_FILE: ${{ runner.temp }}/claude-cost-pr-footer.md
+        run: |
+          if [ ! -f "$FOOTER_FILE" ]; then
+            echo "No footer file from cost step; skipping."
+            exit 0
+          fi
+          MARKER='<!-- claude-cost-marker -->'
+          COMMENT_ID=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n1)
+          PAYLOAD=$(jq -n --rawfile body "$FOOTER_FILE" '{body: $body}')
+          if [ -n "$COMMENT_ID" ]; then
+            echo "Updating existing cost comment $COMMENT_ID"
+            echo "$PAYLOAD" | gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" --input -
+          else
+            echo "Creating new cost footer comment"
+            echo "$PAYLOAD" | gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --input -
+          fi
+
+      - name: Upload cost stats artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-cost-${{ github.run_id }}
+          path: ${{ runner.temp }}/claude-cost.json
+          retention-days: 14
+          if-no-files-found: ignore
