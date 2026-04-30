@@ -29,10 +29,23 @@ Each layer has a single responsibility: routers call services, services use db m
 
 | Trigger | What happens |
 |---|---|
-| Pull request | ruff check + ruff format + pytest |
+| Pull request opened/updated | ruff check + ruff format + pytest |
+| Reviewer requested on PR | Claude PR review (Sonnet 4.6) — inline + summary comments |
+| `deep-review` label added | Claude PR review (Opus 4.7) — adds `[ARCHITECTURE]` critique |
+| `@claude` mention in PR/issue | Claude answers in-thread (Opus 4.7) |
 | Push to `main` | Build image → `alembic upgrade head` → deploy to Cloud Run |
 
 Config is pulled from GCP Secret Manager at container startup — no env vars are set manually in production or CI.
+
+### Code review
+
+Claude reviews PRs on demand, not on every push:
+
+- **Standard review** — request a reviewer in the GitHub UI. Claude (Sonnet 4.6) reads `CLAUDE.md`, the diff, and posts inline `[BLOCKING]` / `[SUGGESTION]` / `[NIT]` comments plus a summary verdict. Re-request the reviewer to re-run on new commits.
+- **Deep review** — add the `deep-review` label to the PR. The same review re-runs on Opus 4.7 with an extra `[ARCHITECTURE]` pass that critiques the design as a whole. Use this for large refactors, new modules, or anything where the standard review felt thin. Remove and re-add the label to re-run.
+- **Follow-ups** — comment `@claude <question>` on a PR or issue (Opus 4.7). Useful for "explain this change", "suggest a service-layer refactor for this endpoint", or "is there a simpler approach here?".
+
+Drafts and bot-authored PRs are skipped automatically. Linting and tests still run on every push as usual.
 
 ## Local development
 
