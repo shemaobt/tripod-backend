@@ -20,8 +20,9 @@ from __future__ import annotations
 import json
 import os
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 # USD per 1M tokens (public API list pricing — used as a stable equivalent
 # regardless of OAuth/Pro/Max billing).

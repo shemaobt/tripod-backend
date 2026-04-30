@@ -131,8 +131,7 @@ def render_markdown(summary: dict[str, Any], lookback_days: int, repo: str) -> s
             continue
         s = summary["by_tier"][tier]
         lines.append(
-            f"| {tier} | {s['runs']} | ${s['cost']:.4f} | "
-            f"{s['input']:,} | {s['output']:,} |"
+            f"| {tier} | {s['runs']} | ${s['cost']:.4f} | {s['input']:,} | {s['output']:,} |"
         )
     lines += [
         "",
@@ -155,9 +154,7 @@ def render_markdown(summary: dict[str, Any], lookback_days: int, repo: str) -> s
             run_link = f"[run]({r['run_url']})" if r["run_url"] else "—"
             tier_str = r["tier"] or "—"
             model_str = r["model"] or "—"
-            lines.append(
-                f"| ${r['cost']:.4f} | `{model_str}` | {tier_str} | {pr} | {run_link} |"
-            )
+            lines.append(f"| ${r['cost']:.4f} | `{model_str}` | {tier_str} | {pr} | {run_link} |")
 
     lines += [
         "",
@@ -202,18 +199,14 @@ def render_discord(summary: dict[str, Any], lookback_days: int, repo: str) -> di
         s = summary["by_tier"][tier]
         tier_lines.append(f"`{tier}` — {s['runs']} runs · ${s['cost']:.4f}")
     if tier_lines:
-        fields.append(
-            {"name": "By model tier", "value": "\n".join(tier_lines), "inline": True}
-        )
+        fields.append({"name": "By model tier", "value": "\n".join(tier_lines), "inline": True})
 
     workflow_lines = [
         f"`{name}` — {s['runs']} runs · ${s['cost']:.4f}"
         for name, s in sorted(summary["by_workflow"].items())
     ]
     if workflow_lines:
-        fields.append(
-            {"name": "By workflow", "value": "\n".join(workflow_lines), "inline": True}
-        )
+        fields.append({"name": "By workflow", "value": "\n".join(workflow_lines), "inline": True})
 
     if summary["top_runs"]:
         top_lines = []
@@ -224,9 +217,7 @@ def render_discord(summary: dict[str, Any], lookback_days: int, repo: str) -> di
             top_lines.append(
                 f"${r['cost']:.4f} · `{r['model'] or '?'}` ({tier_str}) · {pr} {link}".strip()
             )
-        fields.append(
-            {"name": "Top runs", "value": "\n".join(top_lines), "inline": False}
-        )
+        fields.append({"name": "Top runs", "value": "\n".join(top_lines), "inline": False})
 
     return {
         "username": "Claude Cost Report",
