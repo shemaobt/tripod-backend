@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from app.services.bhsa import loader as bhsa_loader
@@ -27,4 +28,4 @@ def collect_bhsa(state: BCDGenerationState) -> dict[str, Any]:
             f"BHSA found no named entities for {book_name}. Cannot build participant register."
         )
 
-    return result.model_dump()
+    return asdict(result)

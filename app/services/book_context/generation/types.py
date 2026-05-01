@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import NotRequired, TypedDict
-
-from pydantic import BaseModel, Field
 
 
 class BHSAEntryRef(TypedDict):
@@ -64,16 +63,17 @@ class CommonNounCandidate(TypedDict):
     sample_appears_in: list[BHSAEntryRef]
 
 
-class CollectBHSAOutput(BaseModel):
+@dataclass
+class CollectBHSAOutput:
     """Result of a single BHSA collection pass.
 
     Used internally by `collect_bhsa_data` and the `collect_bhsa` node so
     fields can be accessed via attribute (e.g. `result.bhsa_entities`). The
-    LangGraph node converts this to a plain dict via `.model_dump()` before
-    returning, so the merge into `BCDGenerationState` keeps the TypedDict
-    contract LangGraph expects.
+    LangGraph node converts this to a plain dict via `dataclasses.asdict()`
+    before returning, so the merge into `BCDGenerationState` keeps the
+    TypedDict contract LangGraph expects.
     """
 
     bhsa_summary: str
-    bhsa_entities: list[BHSAEntity] = Field(default_factory=list)
-    bhsa_common_nouns: list[CommonNounCandidate] = Field(default_factory=list)
+    bhsa_entities: list[BHSAEntity] = field(default_factory=list)
+    bhsa_common_nouns: list[CommonNounCandidate] = field(default_factory=list)
