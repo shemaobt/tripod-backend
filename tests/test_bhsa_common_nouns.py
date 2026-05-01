@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from app.services.book_context.generation import bhsa_common_nouns
+from app.services.book_context.generation import bhsa_collection, bhsa_common_nouns
 
 
 def _stream(payload: list[dict[str, Any]]):
@@ -177,7 +177,7 @@ def test_separate_buckets_for_same_lemma_with_different_sp(
 
 
 def test_top_n_truncates_results(monkeypatch: pytest.MonkeyPatch) -> None:
-    n_lemmas = bhsa_common_nouns._TOP_N + 50
+    n_lemmas = bhsa_collection._TOP_N + 50
     clauses = []
     for i in range(n_lemmas):
         lex = f"lex{i}"
@@ -200,7 +200,7 @@ def test_top_n_truncates_results(monkeypatch: pytest.MonkeyPatch) -> None:
     payload = [{"chapter": 1, "verse_count": n_lemmas * 2, "clauses": clauses}]
     monkeypatch.setattr(bhsa_common_nouns, "stream_book_clauses", _stream(payload))
     result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 1)
-    assert len(result["bhsa_common_nouns"]) == bhsa_common_nouns._TOP_N
+    assert len(result["bhsa_common_nouns"]) == bhsa_collection._TOP_N
 
 
 def test_includes_adjectives_with_valid_function(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -252,7 +252,7 @@ def test_excludes_adjective_only_in_adjunct(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_sample_appears_in_caps_at_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    n_appearances = bhsa_common_nouns._SAMPLE_LIMIT + 4
+    n_appearances = bhsa_collection._SAMPLE_LIMIT + 4
     clauses = [
         {
             "verse": v,
@@ -265,7 +265,7 @@ def test_sample_appears_in_caps_at_limit(monkeypatch: pytest.MonkeyPatch) -> Non
     result = bhsa_common_nouns.extract_common_noun_candidates(None, "Ruth", 1)
     cand = result["bhsa_common_nouns"][0]
     assert cand["appearance_count"] == n_appearances
-    assert len(cand["sample_appears_in"]) == bhsa_common_nouns._SAMPLE_LIMIT
+    assert len(cand["sample_appears_in"]) == bhsa_collection._SAMPLE_LIMIT
     assert cand["sample_appears_in"][0] == {"chapter": 1, "verse": 1}
 
 

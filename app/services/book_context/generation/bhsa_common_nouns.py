@@ -2,23 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.book_context.generation.bhsa_collection import (
-    _MIN_APPEARANCES,
-    _NOMINAL_FUNCTIONS,
-    _SAMPLE_LIMIT,
-    _TOP_N,
-    BHSACommonNounsBuilder,
-)
+from app.services.book_context.generation.bhsa_collection import BHSACommonNounsBuilder
 from app.services.book_context.generation.bhsa_stream import stream_book_clauses
 from app.services.book_context.generation.types import CommonNounCandidate
 
-__all__ = [
-    "_MIN_APPEARANCES",
-    "_NOMINAL_FUNCTIONS",
-    "_SAMPLE_LIMIT",
-    "_TOP_N",
-    "extract_common_noun_candidates",
-]
+__all__ = ["extract_common_noun_candidates"]
 
 
 def extract_common_noun_candidates(
