@@ -101,3 +101,43 @@ def test_schemas_validate():
 
     notes = MaintenanceNotesSchema(generation_notes="auto", known_limitations=["none"])
     assert notes.generation_notes == "auto"
+
+
+def test_object_schema_accepts_display_name():
+    from app.models.book_context import BCDObject, VerseRef
+
+    obj = BCDObject(
+        name="פור",
+        display_name="Festival of Purim",
+        english_gloss="lot",
+        first_appears=VerseRef(chapter=3, verse=7),
+    )
+    assert obj.name == "פור"
+    assert obj.display_name == "Festival of Purim"
+
+    obj_no_display = BCDObject(
+        name="נעל",
+        english_gloss="sandal",
+        first_appears=VerseRef(chapter=4, verse=7),
+    )
+    assert obj_no_display.display_name == ""
+
+
+def test_institution_schema_accepts_display_name():
+    from app.models.book_context import BCDInstitution, VerseRef
+
+    inst = BCDInstitution(
+        name="גאל",
+        display_name="Kinsman-Redemption (Go'el)",
+        english_gloss="redeem",
+        first_invoked=VerseRef(chapter=2, verse=20),
+    )
+    assert inst.name == "גאל"
+    assert inst.display_name == "Kinsman-Redemption (Go'el)"
+
+    inst_no_display = BCDInstitution(
+        name="צום",
+        english_gloss="fasting",
+        first_invoked=VerseRef(chapter=4, verse=16),
+    )
+    assert inst_no_display.display_name == ""
