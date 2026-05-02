@@ -10,6 +10,7 @@ from app.db.models.book_context import BCDGenerationLog
 from app.services.book_context.generation.llm import call_llm
 from app.services.book_context.generation.schemas import ParticipantRegisterSchema
 from app.services.book_context.generation.state import BCDGenerationState
+from app.services.book_context.generation.types import BHSAEntity
 
 logger = logging.getLogger(__name__)
 
@@ -32,47 +33,115 @@ entity_type, entry_verse, exit_verse, appears_in, and appearance_count.
 
 {person_entities}
 
-## Your Task
+## Common Noun Candidates (AUTHORITATIVE — BHSA-extracted lemmas)
 
-Create a participant entry for EACH person entity listed above. \
+The following lemmas were extracted directly from the BHSA. They are the ONLY \
+source from which common-noun participant groups/roles may be drawn. Each \
+candidate includes: lemma (Hebrew), lemma_ascii, english_gloss, sp \
+("subs" / "adjv" / "verb"), appearance_count, top_functions, first_appears, \
+sample_appears_in.
+
+This list is filtered to substantives (`sp == "subs"`) so only nominal \
+candidates are eligible. Verbs and abstract substantives that do not denote \
+human collective roles are processed by other sections of the document.
+
+{common_nouns}
+
+## Output Rules (BHSA-strict)
+
+You MUST produce participant entries ONLY from the two sources below. You MUST \
+NOT invent participants that lack a BHSA anchor (proper-noun entity or \
+common-noun candidate). Your scholarly enrichment is restricted to the \
+descriptive fields explicitly listed for each source (`role_in_book`, \
+`relationships`, `what_audience_knows_at_entry`, `arc`, `status_at_end`, and \
+`type`).
+
+### Source A — Person Entities (proper nouns)
+Create an entry for EACH person entity in the Person Entities list above. \
 All entities have already been classified as persons — do not skip any.
 
 For each participant:
-- name: Copy EXACTLY from the entity data
-- english_gloss: Copy from the entity data. If empty, provide the English \
+- name: copy EXACTLY from the entity data
+- english_gloss: copy from the entity data. If empty, provide the English \
 translation of the Hebrew name.
-- entity_type: Copy EXACTLY from the entity data
-- type: "named" for individuals, "group" for groups, "divine" for God/YHWH
-- entry_verse: Copy EXACTLY from the entity data (do NOT change)
-- exit_verse: Copy EXACTLY from the entity data (do NOT change)
-- appears_in: Copy the ENTIRE appears_in list EXACTLY from the entity data
-- appearance_count: Copy EXACTLY from the entity data
-- role_in_book: Their narrative role (protagonist, antagonist, supporting, etc.)
-- relationships: List of relationship descriptions
-- what_audience_knows_at_entry: What the audience knows when they first appear
-- arc: List of {{at: {{chapter, verse}}, state: "description"}} tracking their development
-- status_at_end: Their state at the book's conclusion
+- entity_type: copy EXACTLY from the entity data
+- type:
+  - "named" (DEFAULT) — for any individual proper noun, INCLUDING toponyms \
+treated as quasi-named entities (regions, tribal lands, kingdoms). \
+Examples of `named`: personal names AND topo­nyms like Judah, Moab, Israel, \
+Persia when used as country/region references.
+  - "group" — ONLY for proper-noun collectives that explicitly denote a \
+plurality of people as a corporate party (e.g., "Israelites", "Moabites" \
+as a people). DO NOT use for country/region toponyms.
+  - "divine" — for God / YHWH / Almighty / Elohim and divine epithets.
+- entry_verse: copy EXACTLY from the entity data (do NOT change)
+- exit_verse: copy EXACTLY from the entity data (do NOT change)
+- appears_in: copy the ENTIRE appears_in list EXACTLY from the entity data
+- appearance_count: copy EXACTLY from the entity data
+- role_in_book: their narrative role (protagonist, antagonist, supporting, etc.)
+- relationships: list of relationship descriptions
+- what_audience_knows_at_entry: what the audience knows when they first appear
+- arc: list of {{at: {{chapter, verse}}, state: "description"}} tracking their development
+- status_at_end: their state at the book's conclusion
 
-CRITICAL RULES:
-1. Create an entry for EVERY person entity in the list — do NOT skip any.
-2. Do NOT invent new participants not in the list.
-3. The name, english_gloss, entity_type, entry_verse, exit_verse, appears_in, \
-and appearance_count MUST be copied exactly — these are static fields.
-4. Your enrichment is limited to: type, role_in_book, relationships, \
-what_audience_knows_at_entry, arc, and status_at_end.
+You MUST NOT invent proper-noun participants outside the entity list.
+
+### Source B — Common Noun Groups, Roles, and Officials
+For EACH candidate in the Common Noun Candidates list whose `sp == "subs"` \
+and whose semantics denote either:
+
+  (a) a HUMAN COLLECTIVE GROUP — a plural/corporate party narratively \
+significant in the book (e.g., elders, women of the city, reapers, \
+foreigners, nobles, witnesses, the seven sons), OR
+
+  (b) an INSTITUTIONAL ROLE OR OFFICE — a categorial human title that \
+identifies a position in the book's social/political/religious system \
+(e.g., king, queen, prince, priest, prophet, judge, official, eunuch, \
+governor, satrap, lord, foreman, kinsman-redeemer).
+
+create a participant entry. Static fields below MUST be copied EXACTLY \
+from the candidate (they are deterministic):
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- entity_type: "person_common"
+- type:
+  - "group" for category (a) — collective groups
+  - "role" for category (b) — institutional roles/offices
+  - "divine" for the divine common noun אלהים (god[s]) when it refers \
+to the proper deity. In that case ALSO override entity_type to "person".
+- entry_verse: copy EXACTLY from the candidate's `first_appears`
+- exit_verse: null
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- appearance_count: copy EXACTLY from the candidate's `appearance_count`
+- role_in_book, relationships, what_audience_knows_at_entry, arc, status_at_end: \
+your scholarly enrichment based on the narrative
+
+You MUST skip generic kinship terms (אב "father", אם "mother", אח \
+"brother", בן "son", בת "daughter") UNLESS the book uses them to form \
+a distinct narrative group with a specific role (e.g., "the seven sons \
+of X" as a corporate party, "the daughters of Y" as a legal-precedent \
+group). Mere familial references that fit any biblical narrative do not \
+warrant participant entries.
+
+You MUST NOT invent participants outside the candidate list. Skip candidates \
+whose semantics do not denote a human collective group, an institutional \
+role, or the divine deity (objects, places, rituals, and abstract concepts \
+go to other sections).
 """
 
 
 async def _generate_batch(
-    entities: list[dict[str, Any]],
+    entities: list[BHSAEntity],
     state: BCDGenerationState,
     outline_json: str,
+    common_nouns_json: str,
 ) -> list[dict[str, Any]]:
     prompt = PARTICIPANT_PROMPT.format(
         book_name=state["book_name"],
         outline=outline_json,
         bhsa_summary=state.get("bhsa_summary", ""),
         person_entities=json.dumps(entities, indent=2),
+        common_nouns=common_nouns_json,
     )
     if state.get("user_feedback"):
         prompt += (
@@ -91,12 +160,15 @@ async def generate_participants(
 ) -> dict[str, list[dict[str, Any]]]:
     bhsa_entities = state.get("bhsa_entities", [])
     person_entities = [e for e in bhsa_entities if e.get("entity_type") in ("person", "ambiguous")]
+    common_nouns = [c for c in state.get("bhsa_common_nouns", []) if c.get("sp") == "subs"]
+    common_nouns_json = json.dumps(common_nouns, indent=2, ensure_ascii=False)
 
     if len(person_entities) <= BATCH_SIZE:
         participants = await _generate_batch(
             person_entities,
             state,
             json.dumps(state.get("structural_outline", {}), indent=2),
+            common_nouns_json,
         )
         return {"participant_register": participants}
 
@@ -124,7 +196,7 @@ async def generate_participants(
             log.output_summary = f"Batch {idx}/{len(batches)} ({len(batch)} entities)"
             await db.commit()
 
-        batch_result = await _generate_batch(batch, state, outline_json)
+        batch_result = await _generate_batch(batch, state, outline_json, common_nouns_json)
         for p in batch_result:
             name = p.get("name", "")
             if name not in seen_names:

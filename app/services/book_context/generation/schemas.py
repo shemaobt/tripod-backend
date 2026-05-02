@@ -56,8 +56,9 @@ class ContextSectionsSchema(BaseModel):
     maintenance_notes: MaintenanceNotesSchema = Field(default_factory=MaintenanceNotesSchema)
 
 
-class ContextSectionsNoPlacesSchema(BaseModel):
+class ContextSectionsBatchSchema(BaseModel):
     theological_spine: str = ""
+    places: list[PlaceSchema] = Field(default_factory=list)
     objects: list[ObjectSchema] = Field(default_factory=list)
     institutions: list[InstitutionSchema] = Field(default_factory=list)
     genre_context: GenreContextSchema = Field(default_factory=GenreContextSchema)

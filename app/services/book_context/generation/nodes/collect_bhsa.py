@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from app.services.bhsa import loader as bhsa_loader
 from app.services.bhsa.reference import normalize_book_name
-from app.services.book_context.generation.bhsa_entities import extract_bhsa_entities
-from app.services.book_context.generation.bhsa_summary import build_bhsa_summary
+from app.services.book_context.generation.bhsa_collection import collect_bhsa_data
 from app.services.book_context.generation.state import BCDGenerationState
 
 
@@ -17,18 +17,15 @@ def collect_bhsa(state: BCDGenerationState) -> dict[str, Any]:
     book_name = normalize_book_name(state["book_name"])
     chapter_count = state["chapter_count"]
 
-    summary = build_bhsa_summary(tf_api, book_name, chapter_count)
-    if not summary.strip():
+    result = collect_bhsa_data(tf_api, book_name, chapter_count)
+
+    if not result.bhsa_summary.strip():
         raise RuntimeError(
             f"BHSA returned empty summary for {book_name}. Check book name and chapter count."
         )
-
-    entities = extract_bhsa_entities(tf_api, book_name, chapter_count)
-    bhsa_entities = entities["bhsa_entities"]
-
-    if not bhsa_entities:
+    if not result.bhsa_entities:
         raise RuntimeError(
             f"BHSA found no named entities for {book_name}. Cannot build participant register."
         )
 
-    return {"bhsa_summary": summary, "bhsa_entities": bhsa_entities}
+    return asdict(result)

@@ -1,14 +1,17 @@
-from typing import Any, TypedDict
+from typing import Any, Required, TypedDict
+
+from app.services.book_context.generation.types import BHSAEntity, CommonNounCandidate
 
 
 class BCDGenerationState(TypedDict, total=False):
-    book_name: str
-    book_id: str
-    bcd_id: str
-    genre: str
-    chapter_count: int
+    book_name: Required[str]
+    book_id: Required[str]
+    bcd_id: Required[str]
+    genre: Required[str]
+    chapter_count: Required[int]
     bhsa_summary: str
-    bhsa_entities: list[dict[str, Any]]
+    bhsa_entities: list[BHSAEntity]
+    bhsa_common_nouns: list[CommonNounCandidate]
     structural_outline: dict[str, Any]
     participant_register: list[dict[str, Any]]
     discourse_threads: list[dict[str, Any]]

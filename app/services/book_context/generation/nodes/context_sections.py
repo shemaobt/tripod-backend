@@ -10,11 +10,12 @@ from app.db.models.book_context import BCDGenerationLog
 from app.services.book_context.generation.llm import call_llm
 from app.services.book_context.generation.nodes.utils import summarize_participants
 from app.services.book_context.generation.schemas import (
-    ContextSectionsNoPlacesSchema,
+    ContextSectionsBatchSchema,
     ContextSectionsSchema,
     PlacesRegisterSchema,
 )
 from app.services.book_context.generation.state import BCDGenerationState
+from app.services.book_context.generation.types import BHSAEntity
 
 logger = logging.getLogger(__name__)
 
@@ -43,40 +44,133 @@ entity_type, entry_verse, exit_verse, appears_in, and appearance_count.
 
 {place_entities}
 
-Generate the remaining sections:
+## Common Noun Candidates (AUTHORITATIVE — BHSA-extracted lemmas)
+
+The following lemmas were extracted directly from the BHSA. They are the ONLY \
+source from which common-noun places, objects and institutions may be drawn. \
+Each candidate includes: lemma, lemma_ascii, english_gloss, sp \
+("subs"/"adjv"/"verb"), appearance_count, top_functions, top_binyans, \
+first_appears, sample_appears_in.
+
+{common_nouns}
+
+## Output Rules (BHSA-strict)
+
+You MUST produce common-noun places, objects and institutions ONLY by selecting \
+candidates from the list above. You MUST NOT invent entries that lack a BHSA \
+lemma anchor. Your scholarly enrichment is restricted to the descriptive fields \
+explicitly listed for each task (e.g. `meaning_and_function`, `what_it_is`, \
+`role_in_book`, `display_name`).
+
+You MUST NOT include in `objects` or `institutions` any lemma that already \
+appears in the participant register with `entity_type == "person_common"` \
+(human collective groups, kinship categories, institutional roles/offices). \
+Those belong only in the participant register; do not duplicate them here.
+
+Generate the following sections:
 
 1. **Theological Spine**: 2-4 paragraphs describing the theological arc of the book. \
 How does God act? What theological themes run through the narrative? What is the book's \
 contribution to the canon?
 
-2. **Places**: Create an entry for EACH place entity listed above. \
-All entities have already been classified as places — do not skip any.
-For each place:
-- name: Copy EXACTLY from the entity data
-- english_gloss: Copy from the entity data. If empty, provide the English \
+2. **Places**: Two sources.
+(a) For EACH proper-noun place entity in the Place Entities list above, create an entry:
+- name: copy EXACTLY from the entity data
+- english_gloss: copy from the entity data. If empty, provide the English \
 translation of the Hebrew name.
-- entity_type: Copy EXACTLY from the entity data
-- first_appears: Copy EXACTLY from the entity data (use entry_verse)
-- type: city, region, field, country, etc.
-- meaning_and_function: The place's significance in the narrative
-- appears_in: Copy the ENTIRE appears_in list EXACTLY from the entity data
-- appearance_count: Copy EXACTLY from the entity data
+- entity_type: copy EXACTLY from the entity data ("place")
+- first_appears: copy EXACTLY from the entity data (use entry_verse)
+- type: city, region, field, country, etc. (your scholarly classification)
+- meaning_and_function: the place's significance in the narrative (1-2 sentences)
+- appears_in: copy the ENTIRE appears_in list EXACTLY from the entity data
+- appearance_count: copy EXACTLY from the entity data
+You MUST NOT invent proper-noun places outside the entity list.
 
-CRITICAL: The name, english_gloss, entity_type, first_appears, appears_in, and \
-appearance_count fields are static and MUST match the entity data exactly. \
-Do NOT invent places not in the list.
+(b) For EACH candidate in the Common Noun Candidates list whose `sp == "subs"` \
+and whose semantics denote a NARRATIVE SETTING (field, gate, threshing floor, \
+city wall, road, vineyard, etc.), create an entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- entity_type: "place_common"
+- first_appears: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- appearance_count: copy EXACTLY from the candidate's `appearance_count`
+- type: city / region / field / threshing_floor / gate / etc. (your scholarly \
+classification of the lemma's semantic type)
+- meaning_and_function: your scholarly enrichment in 1-2 sentences
+You MUST NOT invent common-noun places outside the candidate list. Skip \
+candidates whose semantics do not denote a narrative setting (those go to other \
+sections).
 
-3. **Objects**: Significant physical objects, animals, or temporal markers from the text. \
-These are typically NOT proper nouns, so they won't be in the entity list. \
-For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
-(English translation of the name — if the name is already English, repeat it), \
-first_appears, what_it_is, meaning_across_scenes, appears_in.
+3. **Objects**: For EACH candidate in the Common Noun Candidates list whose \
+`sp == "subs"` and whose semantics fall into ONE of these classes, create \
+an entry:
 
-4. **Institutions**: Cultural/legal institutions referenced in the text. \
-These are typically NOT proper nouns, so they won't be in the entity list. \
-For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
-(English translation of the name — if the name is already English, repeat it), \
-first_invoked (chapter/verse), what_it_is, role_in_book, appears_in.
+  (a) PHYSICAL OBJECT — ritual items, garments, tools, animals, monetary \
+units, scrolls/letters, weapons, food and drink items, containers, \
+agricultural products, body adornments
+  (b) SYMBOLIC ITEM with narrative weight in the book (e.g., gallows as \
+sign of judgment, sandal as legal exchange token, ashes as mourning sign)
+  (c) NARRATIVE STATE OR CONDITION that recurs as a plot anchor \
+(e.g., pregnancy/offspring when it drives the narrative, rest/security \
+as a sought-after outcome, life as a recurring concern). Include this \
+class ONLY when the lemma is referenced multiple times AND functions as \
+a narrative thread, not when it is a passing abstraction.
+
+For each entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- display_name: A rich, narrative-faithful English name when scholarly \
+tradition has one (e.g., a recurring ceremonial garment may be known by a \
+canonical English label; a distinctive item central to the plot may have \
+a culturally-known name in English biblical scholarship). Leave empty when \
+the english_gloss is already self-explanatory and adding a label would be \
+artificial.
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- first_appears: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- what_it_is: 1-2 sentences describing what the object/state is
+- meaning_across_scenes: 2-3 sentences on how its role evolves in the narrative
+
+Skip generic temporal markers (day, night, month, year) UNLESS they carry \
+distinctive narrative or symbolic weight in this specific book. Skip body \
+parts UNLESS they appear in a ritual or symbolic action central to the \
+narrative. Skip purely theological abstractions (God's name, righteousness \
+as a virtue, glory) — those belong in `theological_spine` or as \
+institutions when they name a recognized structure. You MUST NOT invent \
+objects outside the candidate list.
+
+4. **Institutions**: For EACH candidate in the Common Noun Candidates list \
+that denotes a CULTURAL, LEGAL, RELIGIOUS, OR CEREMONIAL STRUCTURE — NOT a \
+human role/title (those go to participants as `type=role`). This includes:
+  - Rituals and rites (e.g., feast, fast, festival, mourning rite, sealing)
+  - Legal practices (e.g., redemption rights, gleaning rights, levirate \
+marriage, decree, inheritance law)
+  - Social structures as institutions (e.g., kinship clan as an institutional \
+unit, kingship as an office, priesthood as an order)
+
+Verbal lemmas (`sp == "verb"`) that name an institutional action (e.g., a \
+verb of redemption, gleaning, sealing, fasting) are eligible. Substantive \
+lemmas (`sp == "subs"`) naming the rite/concept itself are eligible. Skip \
+candidates that are merely a human title or office (those belong in \
+participants).
+
+For each entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- display_name: A rich, narrative-faithful English name in the form scholarly \
+tradition uses (e.g., a culturally-recognized festival name, a legal-practice \
+label, an institutional office name). The display_name should be readable to \
+a Bible translator who does not read Hebrew (e.g., "Festival of Purim", \
+"Kinsman-Redemption (Go'el)", "Levirate Marriage", "Persian Law / Irrevocable \
+Decree"). Leave empty only when the english_gloss already serves as a \
+recognized institutional name on its own.
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- first_invoked: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- what_it_is: 1-2 sentences describing the institution
+- role_in_book: 1-2 sentences on its narrative function
+
+You MUST NOT invent institutions outside the candidate list. Inferred \
+institutions without a BHSA lemma anchor are NOT permitted.
 
 5. **Genre Context**:
 - primary_genre: The primary literary genre
@@ -105,30 +199,128 @@ Discourse threads:
 BHSA linguistic data summary:
 {bhsa_summary}
 
-Generate the following sections (places are handled separately):
+## Common Noun Candidates (AUTHORITATIVE — BHSA-extracted lemmas)
+
+The following lemmas were extracted directly from the BHSA. They are the ONLY \
+source from which common-noun places, objects and institutions may be drawn. \
+Each candidate includes: lemma, lemma_ascii, english_gloss, sp \
+("subs"/"adjv"/"verb"), appearance_count, top_functions, top_binyans, \
+first_appears, sample_appears_in.
+
+{common_nouns}
+
+## Output Rules (BHSA-strict)
+
+You MUST produce common-noun places, objects and institutions ONLY by selecting \
+candidates from the list above. You MUST NOT invent entries that lack a BHSA \
+lemma anchor. Your scholarly enrichment is restricted to the descriptive fields \
+explicitly listed for each task (e.g. `meaning_and_function`, `what_it_is`, \
+`role_in_book`, `display_name`).
+
+You MUST NOT include in `objects` or `institutions` any lemma that already \
+appears in the participant register with `entity_type == "person_common"` \
+(human collective groups, kinship categories, institutional roles/offices). \
+Those belong only in the participant register; do not duplicate them here.
+
+Generate the following sections (proper-noun places are handled in a separate batch):
 
 1. **Theological Spine**: 2-4 paragraphs describing the theological arc of the book. \
 How does God act? What theological themes run through the narrative? What is the book's \
 contribution to the canon?
 
-2. **Objects**: Significant physical objects, animals, or temporal markers from the text. \
-For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
-(English translation of the name — if the name is already English, repeat it), \
-first_appears, what_it_is, meaning_across_scenes, appears_in.
+2. **Common-Noun Places**: For EACH candidate in the Common Noun Candidates list \
+whose `sp == "subs"` and whose semantics denote a NARRATIVE SETTING (field, gate, \
+threshing floor, city wall, road, vineyard, etc.), create an entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- entity_type: "place_common"
+- first_appears: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- appearance_count: copy EXACTLY from the candidate's `appearance_count`
+- type: city / region / field / threshing_floor / gate / etc. (your scholarly \
+classification of the lemma's semantic type)
+- meaning_and_function: your scholarly enrichment in 1-2 sentences
+You MUST NOT invent common-noun places outside the candidate list. Proper-noun \
+places are emitted in a separate batch — do NOT include them here.
 
-3. **Institutions**: Cultural/legal institutions referenced in the text. \
-For each: name (in Hebrew if the original text uses a Hebrew term), english_gloss \
-(English translation of the name — if the name is already English, repeat it), \
-first_invoked (chapter/verse), what_it_is, role_in_book, appears_in.
+3. **Objects**: For EACH candidate in the Common Noun Candidates list whose \
+`sp == "subs"` and whose semantics fall into ONE of these classes, create \
+an entry:
 
-4. **Genre Context**:
+  (a) PHYSICAL OBJECT — ritual items, garments, tools, animals, monetary \
+units, scrolls/letters, weapons, food and drink items, containers, \
+agricultural products, body adornments
+  (b) SYMBOLIC ITEM with narrative weight in the book (e.g., gallows as \
+sign of judgment, sandal as legal exchange token, ashes as mourning sign)
+  (c) NARRATIVE STATE OR CONDITION that recurs as a plot anchor \
+(e.g., pregnancy/offspring when it drives the narrative, rest/security \
+as a sought-after outcome, life as a recurring concern). Include this \
+class ONLY when the lemma is referenced multiple times AND functions as \
+a narrative thread, not when it is a passing abstraction.
+
+For each entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- display_name: A rich, narrative-faithful English name when scholarly \
+tradition has one (e.g., a recurring ceremonial garment may be known by a \
+canonical English label; a distinctive item central to the plot may have \
+a culturally-known name in English biblical scholarship). Leave empty when \
+the english_gloss is already self-explanatory and adding a label would be \
+artificial.
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- first_appears: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- what_it_is: 1-2 sentences describing what the object/state is
+- meaning_across_scenes: 2-3 sentences on how its role evolves in the narrative
+
+Skip generic temporal markers (day, night, month, year) UNLESS they carry \
+distinctive narrative or symbolic weight in this specific book. Skip body \
+parts UNLESS they appear in a ritual or symbolic action central to the \
+narrative. Skip purely theological abstractions (God's name, righteousness \
+as a virtue, glory) — those belong in `theological_spine` or as \
+institutions when they name a recognized structure. You MUST NOT invent \
+objects outside the candidate list.
+
+4. **Institutions**: For EACH candidate in the Common Noun Candidates list \
+that denotes a CULTURAL, LEGAL, RELIGIOUS, OR CEREMONIAL STRUCTURE — NOT a \
+human role/title (those go to participants as `type=role`). This includes:
+  - Rituals and rites (e.g., feast, fast, festival, mourning rite, sealing)
+  - Legal practices (e.g., redemption rights, gleaning rights, levirate \
+marriage, decree, inheritance law)
+  - Social structures as institutions (e.g., kinship clan as an institutional \
+unit, kingship as an office, priesthood as an order)
+
+Verbal lemmas (`sp == "verb"`) that name an institutional action (e.g., a \
+verb of redemption, gleaning, sealing, fasting) are eligible. Substantive \
+lemmas (`sp == "subs"`) naming the rite/concept itself are eligible. Skip \
+candidates that are merely a human title or office (those belong in \
+participants).
+
+For each entry:
+- name: the Hebrew lemma (the `lemma` field) — copy EXACTLY
+- display_name: A rich, narrative-faithful English name in the form scholarly \
+tradition uses (e.g., a culturally-recognized festival name, a legal-practice \
+label, an institutional office name). The display_name should be readable to \
+a Bible translator who does not read Hebrew (e.g., "Festival of Purim", \
+"Kinsman-Redemption (Go'el)", "Levirate Marriage", "Persian Law / Irrevocable \
+Decree"). Leave empty only when the english_gloss already serves as a \
+recognized institutional name on its own.
+- english_gloss: copy EXACTLY from the candidate's `english_gloss`
+- first_invoked: copy EXACTLY from the candidate's `first_appears`
+- appears_in: copy EXACTLY from the candidate's `sample_appears_in`
+- what_it_is: 1-2 sentences describing the institution
+- role_in_book: 1-2 sentences on its narrative function
+
+You MUST NOT invent institutions outside the candidate list. Inferred \
+institutions without a BHSA lemma anchor are NOT permitted.
+
+5. **Genre Context**:
 - primary_genre: The primary literary genre
 - sub_genres: List of secondary genres present
 - narrative_voice: Description of the narrative perspective
 - temporal_setting: When the events take place
 - audience_positioning: How the text positions the reader/listener
 
-5. **Maintenance Notes**:
+6. **Maintenance Notes**:
 - generation_notes: Brief note about how this document was generated
 - known_limitations: List of known limitations or areas that may need human review
 """
@@ -168,11 +360,14 @@ def _build_shared_context(state: BCDGenerationState) -> dict[str, str]:
         "participants": summarize_participants(state.get("participant_register", [])),
         "threads": json.dumps(state.get("discourse_threads", []), indent=2),
         "bhsa_summary": state.get("bhsa_summary", ""),
+        "common_nouns": json.dumps(
+            state.get("bhsa_common_nouns", []), indent=2, ensure_ascii=False
+        ),
     }
 
 
 async def _generate_place_batch(
-    entities: list[dict[str, Any]],
+    entities: list[BHSAEntity],
     book_name: str,
 ) -> list[dict[str, Any]]:
     prompt = PLACES_BATCH_PROMPT.format(
@@ -226,7 +421,7 @@ async def generate_context_sections(
         log.output_summary = "Generating theology, objects, institutions..."
         await db.commit()
 
-    sections = await call_llm(no_places_prompt, output_schema=ContextSectionsNoPlacesSchema)
+    sections = await call_llm(no_places_prompt, output_schema=ContextSectionsBatchSchema)
 
     batches = [
         place_entities[i : i + PLACE_BATCH_SIZE]
@@ -251,6 +446,13 @@ async def generate_context_sections(
             if name not in seen_names:
                 seen_names.add(name)
                 all_places.append(p)
+
+    for p in sections.places:
+        entry = p.model_dump()
+        name = entry.get("name", "")
+        if name and name not in seen_names:
+            seen_names.add(name)
+            all_places.append(entry)
 
     return {
         "theological_spine": sections.theological_spine,

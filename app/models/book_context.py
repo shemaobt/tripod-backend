@@ -67,6 +67,7 @@ class BCDObject(BaseModel):
     model_config = {"extra": "allow"}
 
     name: str
+    display_name: str = ""
     english_gloss: str = ""
     first_appears: VerseRef
     what_it_is: str = ""
@@ -78,6 +79,7 @@ class BCDInstitution(BaseModel):
     model_config = {"extra": "allow"}
 
     name: str
+    display_name: str = ""
     english_gloss: str = ""
     first_invoked: VerseRef
     what_it_is: str = ""
