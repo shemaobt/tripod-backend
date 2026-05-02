@@ -9,11 +9,18 @@ from app.services.book_context.generation import (
     bhsa_summary,
 )
 from app.services.book_context.generation.bhsa_collection import (
-    BHSACommonNounsBuilder,
-    BHSAEntitiesBuilder,
-    BHSASummaryBuilder,
+    _CommonNounsAcc,
+    _EntitiesAcc,
     _min_appearances_for,
+    _SummaryAcc,
     collect_bhsa_data,
+    common_nouns_build,
+    common_nouns_consume,
+    entities_build,
+    entities_consume,
+    summary_build,
+    summary_consume,
+    summary_start_chapter,
 )
 
 
@@ -80,46 +87,46 @@ def _cw(
     return entry
 
 
-def test_summary_builder_emits_chapter_header_with_clause_count() -> None:
-    builder = BHSASummaryBuilder()
-    builder.start_chapter(1)
-    builder.consume(1, _clause(1, gloss="went out"))
-    builder.consume(1, _clause(2, gloss="returned"))
-    out = builder.build()
+def test_summary_emits_chapter_header_with_clause_count() -> None:
+    acc = _SummaryAcc()
+    summary_start_chapter(acc, 1)
+    summary_consume(acc, 1, _clause(1, gloss="went out"))
+    summary_consume(acc, 1, _clause(2, gloss="returned"))
+    out = summary_build(acc)
     assert "=== Chapter 1 (2 clauses) ===" in out
     assert "v1: went out" in out
     assert "v2: returned" in out
 
 
-def test_summary_builder_aggregates_names_and_verbs() -> None:
-    builder = BHSASummaryBuilder()
-    builder.start_chapter(1)
-    builder.consume(1, _clause(1, lemma="HLK", binyan="qal", tense="wayq", names=["Naomi"]))
-    builder.consume(1, _clause(2, lemma="ŠWB", binyan="qal", tense="wayq"))
-    out = builder.build()
+def test_summary_aggregates_names_and_verbs() -> None:
+    acc = _SummaryAcc()
+    summary_start_chapter(acc, 1)
+    summary_consume(acc, 1, _clause(1, lemma="HLK", binyan="qal", tense="wayq", names=["Naomi"]))
+    summary_consume(acc, 1, _clause(2, lemma="ŠWB", binyan="qal", tense="wayq"))
+    out = summary_build(acc)
     assert "Names: Naomi" in out
     assert "HLK (qal/wayq)" in out
     assert "ŠWB (qal/wayq)" in out
 
 
-def test_summary_builder_resets_per_chapter() -> None:
-    builder = BHSASummaryBuilder()
-    builder.start_chapter(1)
-    builder.consume(1, _clause(1, names=["Naomi"]))
-    builder.start_chapter(2)
-    builder.consume(2, _clause(1, names=["Boaz"]))
-    out = builder.build()
+def test_summary_resets_per_chapter() -> None:
+    acc = _SummaryAcc()
+    summary_start_chapter(acc, 1)
+    summary_consume(acc, 1, _clause(1, names=["Naomi"]))
+    summary_start_chapter(acc, 2)
+    summary_consume(acc, 2, _clause(1, names=["Boaz"]))
+    out = summary_build(acc)
     assert "=== Chapter 1 (1 clauses) ===" in out
     assert "=== Chapter 2 (1 clauses) ===" in out
-    # Boaz should appear only in chapter 2 block
     chapter1, chapter2 = out.split("=== Chapter 2")
     assert "Boaz" not in chapter1
     assert "Boaz" in chapter2
 
 
-def test_entities_builder_aggregates_appearances() -> None:
-    builder = BHSAEntitiesBuilder()
-    builder.consume(
+def test_entities_aggregates_appearances() -> None:
+    acc = _EntitiesAcc()
+    entities_consume(
+        acc,
         1,
         _clause(
             1,
@@ -128,9 +135,9 @@ def test_entities_builder_aggregates_appearances() -> None:
             name_types={"Naomi": "pers"},
         ),
     )
-    builder.consume(1, _clause(5, names=["Naomi"]))
-    builder.consume(2, _clause(3, names=["Naomi", "Ruth"], name_types={"Ruth": "pers"}))
-    entities = builder.build()
+    entities_consume(acc, 1, _clause(5, names=["Naomi"]))
+    entities_consume(acc, 2, _clause(3, names=["Naomi", "Ruth"], name_types={"Ruth": "pers"}))
+    entities = entities_build(acc)
     naomi = next(e for e in entities if e["name"] == "Naomi")
     assert naomi["entry_verse"] == {"chapter": 1, "verse": 1}
     assert naomi["exit_verse"] == {"chapter": 2, "verse": 3}
@@ -138,27 +145,24 @@ def test_entities_builder_aggregates_appearances() -> None:
     assert naomi["entity_type"] == "person"
 
 
-def test_entities_builder_skips_mens_nametype() -> None:
-    builder = BHSAEntitiesBuilder()
-    builder.consume(
-        1,
-        _clause(1, names=["Foo"], name_types={"Foo": "mens"}),
+def test_entities_skips_mens_nametype() -> None:
+    acc = _EntitiesAcc()
+    entities_consume(acc, 1, _clause(1, names=["Foo"], name_types={"Foo": "mens"}))
+    assert entities_build(acc) == []
+
+
+def test_common_nouns_filters_low_frequency() -> None:
+    acc = _CommonNounsAcc()
+    common_nouns_consume(acc, 1, _clause(1, content_words=[_cw("rare", "subs", function="Subj")]))
+    assert common_nouns_build(acc) == []
+
+
+def test_common_nouns_accepts_min_appearances_override() -> None:
+    acc = _CommonNounsAcc(min_appearances=1)
+    common_nouns_consume(
+        acc, 1, _clause(1, content_words=[_cw("איפה", "subs", gloss="ephah", function="Objc")])
     )
-    assert builder.build() == []
-
-
-def test_common_nouns_builder_filters_low_frequency() -> None:
-    builder = BHSACommonNounsBuilder()
-    builder.consume(1, _clause(1, content_words=[_cw("rare", "subs", function="Subj")]))
-    assert builder.build() == []
-
-
-def test_common_nouns_builder_accepts_min_appearances_override() -> None:
-    builder = BHSACommonNounsBuilder(min_appearances=1)
-    builder.consume(
-        1, _clause(1, content_words=[_cw("איפה", "subs", gloss="ephah", function="Objc")])
-    )
-    candidates = builder.build()
+    candidates = common_nouns_build(acc)
     assert len(candidates) == 1
     assert candidates[0]["lemma"] == "איפה"
     assert candidates[0]["appearance_count"] == 1
@@ -172,7 +176,6 @@ def test_min_appearances_for_small_book() -> None:
 
 
 def test_collect_bhsa_data_uses_adaptive_threshold(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Books with ≤4 chapters accept single-occurrence lemmas (Strategy 1)."""
     payload = [
         {
             "chapter": 1,
@@ -188,22 +191,19 @@ def test_collect_bhsa_data_uses_adaptive_threshold(monkeypatch: pytest.MonkeyPat
         }
     ]
     monkeypatch.setattr(bhsa_collection, "stream_book_clauses", _stream(payload))
-
-    # 4 chapters → threshold 1 → single-occurrence lemma kept
     result_small = collect_bhsa_data(None, "Ruth", 4)
     assert any(c["lemma"] == "איפה" for c in result_small.bhsa_common_nouns)
 
-    # 50 chapters → threshold 2 → single-occurrence lemma dropped
     monkeypatch.setattr(bhsa_collection, "stream_book_clauses", _stream(payload))
     result_large = collect_bhsa_data(None, "Genesis", 50)
     assert not any(c["lemma"] == "איפה" for c in result_large.bhsa_common_nouns)
 
 
-def test_common_nouns_builder_includes_verbs_with_any_function() -> None:
-    builder = BHSACommonNounsBuilder()
-    builder.consume(1, _clause(1, content_words=[_cw("גאל", "verb", binyan="qal")]))
-    builder.consume(1, _clause(2, content_words=[_cw("גאל", "verb", binyan="qal")]))
-    candidates = builder.build()
+def test_common_nouns_includes_verbs_with_any_function() -> None:
+    acc = _CommonNounsAcc()
+    common_nouns_consume(acc, 1, _clause(1, content_words=[_cw("גאל", "verb", binyan="qal")]))
+    common_nouns_consume(acc, 1, _clause(2, content_words=[_cw("גאל", "verb", binyan="qal")]))
+    candidates = common_nouns_build(acc)
     assert len(candidates) == 1
     assert candidates[0]["sp"] == "verb"
     assert candidates[0]["lemma"] == "גאל"

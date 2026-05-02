@@ -65,15 +65,6 @@ class CommonNounCandidate(TypedDict):
 
 @dataclass
 class CollectBHSAOutput:
-    """Result of a single BHSA collection pass.
-
-    Used internally by `collect_bhsa_data` and the `collect_bhsa` node so
-    fields can be accessed via attribute (e.g. `result.bhsa_entities`). The
-    LangGraph node converts this to a plain dict via `dataclasses.asdict()`
-    before returning, so the merge into `BCDGenerationState` keeps the
-    TypedDict contract LangGraph expects.
-    """
-
     bhsa_summary: str
     bhsa_entities: list[BHSAEntity] = field(default_factory=list)
     bhsa_common_nouns: list[CommonNounCandidate] = field(default_factory=list)

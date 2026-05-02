@@ -6,8 +6,6 @@ from app.services.book_context.generation.types import ClauseExtract, ContentWor
 
 _MAINLINE_TYPES = frozenset({"Way0", "WayX"})
 _CONTENT_FUNCTIONS = frozenset({"Subj", "Objc", "Cmpl", "PreC"})
-# Excludes both pronominal pdps (prde/prps/prin) and interjections (intj):
-# neither yields a meaningful content-word entry for downstream aggregation.
 _FILTERED_PDP = frozenset({"prde", "prps", "prin", "intj"})
 
 

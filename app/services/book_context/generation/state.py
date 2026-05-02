@@ -4,13 +4,6 @@ from app.services.book_context.generation.types import BHSAEntity, CommonNounCan
 
 
 class BCDGenerationState(TypedDict, total=False):
-    """LangGraph state for BCD generation.
-
-    Fields marked `Required[]` are part of the initial input and are guaranteed
-    to be present when the graph is invoked. The remaining fields are populated
-    by intermediate nodes and are absent until then.
-    """
-
     book_name: Required[str]
     book_id: Required[str]
     bcd_id: Required[str]
