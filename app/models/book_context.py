@@ -1,9 +1,18 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.db.models.book_context import BCDStatus
+
+
+class ParticipantType(StrEnum):
+    NAMED = "named"
+    UNNAMED = "unnamed"
+    GROUP = "group"
+    DIVINE = "divine"
+    ROLE = "role"
 
 
 class VerseRef(BaseModel):
@@ -27,7 +36,7 @@ class BCDParticipantEntry(BaseModel):
     name: str
     english_gloss: str = ""
     entity_type: str = "person"
-    type: str = "named"
+    type: ParticipantType = ParticipantType.NAMED
     entry_verse: VerseRef
     exit_verse: VerseRef | None = None
     appears_in: list[VerseRef] = Field(default_factory=list)
