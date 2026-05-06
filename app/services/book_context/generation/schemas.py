@@ -26,7 +26,7 @@ class ParticipantSchema(BaseModel):
     what_audience_knows_at_entry: str = ""
     arc: list[ArcEntrySchema] = Field(default_factory=list)
     status_at_end: str = ""
-    provenance: EntryProvenance = "ai"
+    provenance: EntryProvenance = EntryProvenance.AI
 
 
 class ParticipantRegisterSchema(BaseModel):
@@ -39,7 +39,7 @@ class DiscourseThreadSchema(BaseModel):
     resolved_at: VerseRefSchema | None = None
     question: str
     status_by_episode: list[EpisodeStatusSchema] = Field(default_factory=list)
-    provenance: EntryProvenance = "ai"
+    provenance: EntryProvenance = EntryProvenance.AI
 
 
 class DiscourseThreadsSchema(BaseModel):
